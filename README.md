@@ -268,6 +268,14 @@ MIT License - see [LICENSE](LICENSE) file for details
 - Infineon Bootloader Protocol Specification v1.30
 - PSoC Creator Component Datasheet: Bootloader and Bootloadable
 
+## Support This Project
+
+If you find this library useful, please consider supporting its development:
+
+[![PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/joseluismoffa)
+
+Your support helps maintain and improve this project. Thank you!
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
