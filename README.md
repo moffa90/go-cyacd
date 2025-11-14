@@ -1,5 +1,11 @@
 # go-cyacd
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/moffa90/go-cyacd.svg)](https://pkg.go.dev/github.com/moffa90/go-cyacd)
+[![Go Report Card](https://goreportcard.com/badge/github.com/moffa90/go-cyacd)](https://goreportcard.com/report/github.com/moffa90/go-cyacd)
+[![CI](https://github.com/moffa90/go-cyacd/workflows/CI/badge.svg)](https://github.com/moffa90/go-cyacd/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/moffa90/go-cyacd)](https://github.com/moffa90/go-cyacd)
+
 Professional Go library for programming Cypress/Infineon microcontrollers with .cyacd firmware files.
 
 ## Features
