@@ -63,7 +63,15 @@ func ParseReader(r io.Reader) (*Firmware, error) {
 			continue
 		}
 
-		row, err := parseRow(line)
+		// Check if this is Intel HEX format (starts with ':')
+		var row *Row
+		var err error
+		if len(line) > 0 && line[0] == ':' {
+			row, err = parseIntelHexRow(line)
+		} else {
+			row, err = parseRow(line)
+		}
+
 		if err != nil {
 			return nil, fmt.Errorf("line %d: %w", lineNum, err)
 		}
@@ -175,6 +183,63 @@ func parseRow(line string) (*Row, error) {
 		Checksum: checksum,
 	}
 	copy(row.Data, rowData)
+
+	return row, nil
+}
+
+// parseIntelHexRow parses a row in PSoC hybrid format (starting with ':').
+// This is a PSoC-specific hybrid format where rows have an Intel HEX EOF header
+// followed by raw firmware data.
+//
+// Format: :[Intel HEX EOF Header (10 chars)][Raw Data]
+//
+// Example: :0000450100[raw firmware bytes...]
+//   - :0000450100 is an Intel HEX EOF record (LL=00, AAAA=0045, TT=01, CC=00)
+//   - Everything after is raw firmware data (not CYACD format)
+//
+// We extract the address from the Intel HEX header and use it as the row number,
+// then treat the remaining data as the row's firmware bytes.
+func parseIntelHexRow(line string) (*Row, error) {
+	// Remove the leading ':'
+	if len(line) < 1 || line[0] != ':' {
+		return nil, fmt.Errorf("hybrid row must start with ':'")
+	}
+
+	line = line[1:] // Strip ':'
+
+	// Minimum: Intel HEX header (10 chars) + some data
+	if len(line) < 12 {
+		return nil, fmt.Errorf("hybrid row too short: got %d characters, minimum is 12", len(line))
+	}
+
+	// Decode the Intel HEX header (first 10 hex chars = 5 bytes)
+	// Format: LLAAAATTCC where LL=length, AAAA=address, TT=type, CC=checksum
+	headerHex := line[:10]
+	headerData, err := hex.DecodeString(headerHex)
+	if err != nil {
+		return nil, fmt.Errorf("invalid Intel HEX header: %w", err)
+	}
+
+	// Extract address from header (bytes 1-2, big-endian in Intel HEX)
+	address := uint16(headerData[1])<<8 | uint16(headerData[2])
+
+	// The remaining data after the Intel HEX header is the raw firmware
+	dataHex := line[10:]
+	data, err := hex.DecodeString(dataHex)
+	if err != nil {
+		return nil, fmt.Errorf("invalid hex data: %w", err)
+	}
+
+	// Calculate checksum for the firmware data
+	checksum := calculateRowChecksum(data)
+
+	// Create row with address as row number, array ID = 0
+	row := &Row{
+		ArrayID:  0x00,
+		RowNum:   address,
+		Data:     data,
+		Checksum: checksum,
+	}
 
 	return row, nil
 }
