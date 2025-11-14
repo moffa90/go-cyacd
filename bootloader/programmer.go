@@ -228,8 +228,20 @@ func (p *Programmer) programRow(ctx context.Context, row *cyacd.Row) error {
 		return err
 	}
 
-	if err := p.sendCommand(ctx, cmd); err != nil {
+	// Send command and wait for response
+	response, err := p.sendCommandWithResponse(ctx, cmd)
+	if err != nil {
 		return err
+	}
+
+	// Check for success status
+	statusCode, _, err := protocol.ParseResponse(response)
+	if err != nil {
+		return err
+	}
+
+	if statusCode != protocol.StatusSuccess {
+		return &protocol.ProtocolError{StatusCode: statusCode}
 	}
 
 	return nil

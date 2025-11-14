@@ -17,7 +17,7 @@ type Config struct {
 	WriteTimeout time.Duration
 
 	// ChunkSize is the maximum data size per Send Data command
-	// Default is 57 bytes (fits in 64-byte USB packets)
+	// Default is 64 bytes
 	ChunkSize int
 
 	// Retries is the number of retry attempts for failed commands
@@ -32,7 +32,7 @@ func defaultConfig() Config {
 	return Config{
 		ReadTimeout:        5 * time.Second,
 		WriteTimeout:       5 * time.Second,
-		ChunkSize:          57, // 64-byte packet - 7 byte overhead
+		ChunkSize:          64, // Default chunk size
 		Retries:            3,
 		VerifyAfterProgram: true,
 	}
@@ -102,11 +102,11 @@ func WithWriteTimeout(timeout time.Duration) Option {
 }
 
 // WithChunkSize sets the maximum data size per Send Data command.
-// Default is 57 bytes (to fit in 64-byte USB packets).
+// Default is 64 bytes.
 //
 // Example:
 //
-//	prog := bootloader.New(device, bootloader.WithChunkSize(64))
+//	prog := bootloader.New(device, bootloader.WithChunkSize(128))
 func WithChunkSize(size int) Option {
 	return func(c *Config) {
 		if size > 0 && size <= 256 {

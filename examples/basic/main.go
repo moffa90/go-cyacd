@@ -52,8 +52,8 @@ func main() {
 
 	// Parse firmware file
 	// For this example, we'll create a minimal valid .cyacd content
-	cyacdContent := "1E9602AA00\n" + // Header: SiliconID=0x1E9602AA, Rev=0x00, Checksum=Basic
-		"000000040401020304F6\n" // Row: ArrayID=0, RowNum=0, Data=[1,2,3,4]
+	cyacdContent := "1E9602AA0000\n" + // Header: SiliconID=0x1E9602AA, Rev=0x00, Checksum=Basic
+		"000000040001020304F2\n" // Row: ArrayID=0, RowNum=0, DataLen=4, Data=[1,2,3,4], Checksum
 
 	fw, err := cyacd.ParseReader(bytes.NewReader([]byte(cyacdContent)))
 	if err != nil {

@@ -17,7 +17,8 @@ Professional Go library for programming Cypress/Infineon microcontrollers with .
 - 🔄 **Progress tracking** - Real-time programming progress callbacks
 - 📝 **Comprehensive logging** - Pluggable logging interface
 - ⏱️ **Context support** - Cancellation and timeout support
-- ✅ **Well tested** - Extensive test coverage
+- ✅ **Production tested** - Extensively validated with real firmware
+- 🧪 **Mock device included** - Test without hardware
 - 📚 **Documented** - Comprehensive godoc and examples
 
 ## Installation

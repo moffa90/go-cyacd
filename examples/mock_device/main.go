@@ -22,6 +22,7 @@ type RealisticMockDevice struct {
 	flash        map[uint16][]byte // Simulated flash memory
 	inBootloader bool
 	latency      time.Duration
+	responseQueue []byte           // Queue for responses to be read
 }
 
 func NewRealisticMockDevice() *RealisticMockDevice {
@@ -40,9 +41,30 @@ func (d *RealisticMockDevice) Read(p []byte) (int, error) {
 	// Simulate device response time
 	time.Sleep(d.latency)
 
-	// This would be implemented by your actual hardware
-	// For now, just return empty data
-	return len(p), nil
+	// Return data from response queue
+	if len(d.responseQueue) == 0 {
+		return 0, fmt.Errorf("no response available")
+	}
+
+	// Parse frame length to return exactly one frame
+	// Frame format: SOP(1) + Status(1) + Len(2) + Data(N) + Checksum(2) + EOP(1)
+	if len(d.responseQueue) < protocol.MinFrameSize {
+		return 0, fmt.Errorf("incomplete frame in queue")
+	}
+
+	// Extract data length from frame
+	dataLen := int(d.responseQueue[2]) | int(d.responseQueue[3])<<8
+	frameLen := protocol.MinFrameSize + dataLen
+
+	if len(d.responseQueue) < frameLen {
+		return 0, fmt.Errorf("incomplete frame in queue")
+	}
+
+	// Copy exactly one frame
+	n := copy(p, d.responseQueue[:frameLen])
+	fmt.Printf("[DEVICE] Read frame: len=%d, dataLen=%d, bytes=% 02X\n", frameLen, dataLen, d.responseQueue[:frameLen])
+	d.responseQueue = d.responseQueue[frameLen:]
+	return n, nil
 }
 
 func (d *RealisticMockDevice) Write(p []byte) (int, error) {
@@ -76,14 +98,14 @@ func (d *RealisticMockDevice) Write(p []byte) (int, error) {
 	case protocol.CmdSendData:
 		response = d.handleSendData(p)
 	default:
-		response = buildResponseFrame(protocol.ErrCmd, nil)
+		response = buildResponseFrame(protocol.ErrCommand, nil)
 	}
 
-	// In a real device, this response would be sent back via Read()
-	// For this mock, we just log it
+	// Store response in queue for Read() to return
 	if err == nil && response != nil {
-		fmt.Printf("[DEVICE] Sent response: cmd=0x%02X, status=0x%02X, len=%d\n",
-			cmd, response[1], len(response))
+		d.responseQueue = append(d.responseQueue, response...)
+		fmt.Printf("[DEVICE] Queued response: cmd=0x%02X, status=0x%02X, len=%d, bytes=% 02X\n",
+			cmd, response[1], len(response), response)
 	}
 
 	return len(p), nil
@@ -130,8 +152,11 @@ func (d *RealisticMockDevice) handleProgramRow(frame []byte) []byte {
 	dataStart := 4
 	arrayID := frame[dataStart]
 	rowNum := binary.LittleEndian.Uint16(frame[dataStart+1 : dataStart+3])
-	dataLen := binary.LittleEndian.Uint16(frame[2:4])
-	rowData := frame[dataStart+3 : dataStart+int(dataLen)]
+	packetDataLen := binary.LittleEndian.Uint16(frame[2:4])
+	// Packet data includes: arrayID(1) + rowNum(2) + rowData(N)
+	// So actual row data length = packetDataLen - 3
+	rowDataLen := int(packetDataLen) - 3
+	rowData := frame[dataStart+3 : dataStart+3+rowDataLen]
 
 	// Validate row is in range
 	if rowNum < d.flashStart || rowNum > d.flashEnd {
