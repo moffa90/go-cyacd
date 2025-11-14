@@ -272,7 +272,7 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 If you find this library useful, please consider supporting its development:
 
-[![PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/joseluismoffa)
+[![PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/moffax)
 
 Your support helps maintain and improve this project. Thank you!
 
