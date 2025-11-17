@@ -49,6 +49,11 @@ type Config struct {
 	// USB/HID typically use 1ms, Serial typically uses 25ms
 	// Default is 0 (no delay)
 	CommandDelay time.Duration
+
+	// LenientVerifyRow allows accepting 0-byte or 1-byte VerifyRow responses
+	// Default is false (strict: require exactly 1 byte per Infineon spec)
+	// Enable this for legacy or non-standard bootloader firmware that returns 0 bytes
+	LenientVerifyRow bool
 }
 
 // defaultConfig returns the default configuration.
@@ -181,5 +186,22 @@ func WithCommandDelay(delay time.Duration) Option {
 		if delay >= 0 {
 			c.CommandDelay = delay
 		}
+	}
+}
+
+// WithLenientVerifyRow enables lenient validation for VerifyRow command responses.
+// When enabled, accepts both 0-byte (returns 0x00) and 1-byte (returns checksum) responses.
+// Default is false (strict mode: require exactly 1 byte per Infineon AN60317 specification).
+//
+// Use this option for legacy or non-standard bootloader firmware that returns 0-byte
+// responses for command 0x3A (Get Row Checksum) instead of the required 1-byte checksum.
+//
+// Example:
+//
+//	// For devices with non-standard firmware
+//	prog := bootloader.New(device, bootloader.WithLenientVerifyRow())
+func WithLenientVerifyRow() Option {
+	return func(c *Config) {
+		c.LenientVerifyRow = true
 	}
 }

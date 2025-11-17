@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2025-01-17
+
+### Added
+
+- **bootloader/options.go**: New `WithLenientVerifyRow()` option for compatibility with legacy/non-standard bootloader firmware
+- **protocol/responses.go**: Lenient mode in `ParseVerifyRowResponse()` accepts both 0-byte and 1-byte responses
+
+### Changed
+
+- **protocol/responses.go**: `ParseVerifyRowResponse()` now accepts a `lenient bool` parameter
+  - When `lenient=false` (default): Strictly requires 1 byte per Infineon AN60317 v1.60 specification
+  - When `lenient=true`: Accepts 0-byte (returns 0x00) or 1-byte (returns checksum) for compatibility
+- **bootloader/programmer.go**: Updated to pass `LenientVerifyRow` config to response parser
+
+### Fixed
+
+- Support for devices with non-standard firmware that return 0-byte VerifyRow (0x3A) responses instead of the required 1-byte checksum
+
+### Notes
+
+**Default behavior unchanged:** The library remains strictly spec-compliant by default. Use `WithLenientVerifyRow()` option only if your device firmware returns 0-byte responses for command 0x3A.
+
+Per Infineon AN60317 v1.60, command 0x3A (Get Row Checksum) should return exactly 1 byte containing the row checksum. Devices returning 0 bytes are non-compliant but may exist in legacy or custom implementations.
+
+**Usage Example:**
+```go
+prog := bootloader.New(device,
+    bootloader.WithLenientVerifyRow(),  // Enable for non-standard devices
+)
+```
+
+---
+
 ## [0.5.0] - 2025-01-17
 
 ### BREAKING CHANGES
@@ -161,6 +194,7 @@ This clearly includes the SOP byte. Our previous implementation violated the spe
 - Comprehensive test coverage
 - Examples for basic, advanced, and progress tracking use cases
 
+[0.5.1]: https://github.com/moffa90/go-cyacd/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/moffa90/go-cyacd/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/moffa90/go-cyacd/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/moffa90/go-cyacd/compare/v0.3.4...v0.4.0

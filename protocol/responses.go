@@ -94,10 +94,29 @@ func ParseGetFlashSizeResponse(data []byte) (*FlashSize, error) {
 // ParseVerifyRowResponse parses the Verify Row command response.
 // Returns the checksum byte for the verified row.
 //
-// Data format (1 byte):
+// Data format (1 byte per Infineon AN60317 spec):
 //
 //	[ROW_CHECKSUM]
-func ParseVerifyRowResponse(data []byte) (byte, error) {
+//
+// When lenient=true, accepts both 0-byte and 1-byte responses for compatibility
+// with legacy or non-standard bootloader firmware. Returns 0x00 for 0-byte responses.
+//
+// When lenient=false (default), strictly requires exactly 1 byte per specification.
+func ParseVerifyRowResponse(data []byte, lenient bool) (byte, error) {
+	if lenient {
+		// Lenient mode: accept 0-byte or 1-byte responses
+		if len(data) == 0 {
+			// Non-standard: treat 0-byte response as success with checksum 0x00
+			return 0x00, nil
+		}
+		if len(data) == 1 {
+			// Standard: return the row checksum
+			return data[0], nil
+		}
+		return 0, fmt.Errorf("invalid data length for Verify Row response: got %d bytes, expected 0 or 1 (lenient mode)", len(data))
+	}
+
+	// Strict mode (default): require exactly 1 byte per Infineon spec
 	if len(data) != VerifyRowResponseSize {
 		return 0, fmt.Errorf("invalid data length for Verify Row response: got %d bytes, expected %d", len(data), VerifyRowResponseSize)
 	}

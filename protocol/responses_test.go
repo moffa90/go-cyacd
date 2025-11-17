@@ -251,33 +251,60 @@ func TestParseVerifyRowResponse(t *testing.T) {
 	tests := []struct {
 		name         string
 		data         []byte
+		lenient      bool
 		wantChecksum byte
 		wantErr      bool
 		errMsg       string
 	}{
+		// Strict mode tests (default)
 		{
-			name:         "valid checksum",
+			name:         "strict: valid checksum",
 			data:         []byte{0xAB},
+			lenient:      false,
 			wantChecksum: 0xAB,
 			wantErr:      false,
 		},
 		{
-			name:    "empty data",
+			name:    "strict: empty data",
 			data:    []byte{},
+			lenient: false,
 			wantErr: true,
 			errMsg:  "invalid data length",
 		},
 		{
-			name:    "data too long",
+			name:    "strict: data too long",
 			data:    []byte{0x01, 0x02},
+			lenient: false,
 			wantErr: true,
 			errMsg:  "invalid data length",
+		},
+		// Lenient mode tests
+		{
+			name:         "lenient: 0-byte response returns 0x00",
+			data:         []byte{},
+			lenient:      true,
+			wantChecksum: 0x00,
+			wantErr:      false,
+		},
+		{
+			name:         "lenient: 1-byte response returns checksum",
+			data:         []byte{0xFA},
+			lenient:      true,
+			wantChecksum: 0xFA,
+			wantErr:      false,
+		},
+		{
+			name:    "lenient: 2+ bytes is error",
+			data:    []byte{0x01, 0x02},
+			lenient: true,
+			wantErr: true,
+			errMsg:  "expected 0 or 1",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			checksum, err := ParseVerifyRowResponse(tt.data)
+			checksum, err := ParseVerifyRowResponse(tt.data, tt.lenient)
 
 			if tt.wantErr {
 				if err == nil {

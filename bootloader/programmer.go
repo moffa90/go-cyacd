@@ -272,7 +272,7 @@ func (p *Programmer) verifyRow(ctx context.Context, row *cyacd.Row) error {
 		}
 	}
 
-	deviceChecksum, err := protocol.ParseVerifyRowResponse(data)
+	deviceChecksum, err := protocol.ParseVerifyRowResponse(data, p.config.LenientVerifyRow)
 	if err != nil {
 		return err
 	}
