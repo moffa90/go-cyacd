@@ -25,6 +25,11 @@ type Config struct {
 
 	// VerifyAfterProgram enables row verification after each program operation
 	VerifyAfterProgram bool
+
+	// CommandDelay is the delay between consecutive commands
+	// USB/HID typically use 1ms, Serial typically uses 25ms
+	// Default is 0 (no delay)
+	CommandDelay time.Duration
 }
 
 // defaultConfig returns the default configuration.
@@ -137,5 +142,24 @@ func WithRetries(retries int) Option {
 func WithVerifyAfterProgram(verify bool) Option {
 	return func(c *Config) {
 		c.VerifyAfterProgram = verify
+	}
+}
+
+// WithCommandDelay sets the delay between consecutive commands.
+// This is useful for slower transports like Serial which may need 25ms delays,
+// while USB/HID typically work fine with 1ms or no delay.
+//
+// Example:
+//
+//	// For Serial devices
+//	prog := bootloader.New(device, bootloader.WithCommandDelay(25*time.Millisecond))
+//
+//	// For USB/HID devices
+//	prog := bootloader.New(device, bootloader.WithCommandDelay(1*time.Millisecond))
+func WithCommandDelay(delay time.Duration) Option {
+	return func(c *Config) {
+		if delay >= 0 {
+			c.CommandDelay = delay
+		}
 	}
 }

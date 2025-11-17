@@ -27,6 +27,27 @@ func CalculateRowChecksum(data []byte) byte {
 	return ^sum + 1
 }
 
+// CalculateRowChecksumWithMetadata computes the full row checksum including metadata.
+// This is what the device actually verifies during row verification commands.
+//
+// The device checksum includes:
+//   - The data checksum from the .cyacd file
+//   - ArrayID (1 byte)
+//   - RowNum (2 bytes, big-endian)
+//   - DataSize (2 bytes, big-endian)
+//
+// This matches the Cypress bootloader protocol specification and is verified
+// against the working bootloader-usb implementation.
+func CalculateRowChecksumWithMetadata(dataChecksum byte, arrayID byte, rowNum uint16, dataSize uint16) byte {
+	sum := dataChecksum
+	sum += arrayID
+	sum += byte(rowNum >> 8)   // RowNum high byte
+	sum += byte(rowNum)         // RowNum low byte
+	sum += byte(dataSize >> 8)  // Size high byte
+	sum += byte(dataSize)       // Size low byte
+	return sum
+}
+
 // calculateCRC16 computes CRC-16-CCITT checksum.
 // Used when packet checksum type is CRC16.
 //

@@ -277,8 +277,14 @@ func (p *Programmer) verifyRow(ctx context.Context, row *cyacd.Row) error {
 		return err
 	}
 
-	// Calculate expected checksum: row checksum + metadata
-	expectedChecksum := protocol.CalculateRowChecksum(row.Data)
+	// Calculate expected checksum: the device verifies checksum WITH metadata
+	// This includes the row checksum from .cyacd file PLUS ArrayID, RowNum, and Size
+	expectedChecksum := protocol.CalculateRowChecksumWithMetadata(
+		row.Checksum,
+		row.ArrayID,
+		row.RowNum,
+		uint16(len(row.Data)),
+	)
 	if deviceChecksum != expectedChecksum {
 		return &ChecksumMismatchError{
 			RowNum:   row.RowNum,
@@ -414,8 +420,16 @@ func (p *Programmer) VerifyChecksum(ctx context.Context) (bool, error) {
 
 // sendCommand sends a command and expects no response (fire-and-forget).
 func (p *Programmer) sendCommand(ctx context.Context, cmd []byte) error {
-	_, err := p.device.Write(cmd)
-	return err
+	if _, err := p.device.Write(cmd); err != nil {
+		return err
+	}
+
+	// Apply inter-command delay if configured
+	if p.config.CommandDelay > 0 {
+		time.Sleep(p.config.CommandDelay)
+	}
+
+	return nil
 }
 
 // sendCommandWithResponse sends a command and waits for a response.
@@ -424,6 +438,11 @@ func (p *Programmer) sendCommandWithResponse(ctx context.Context, cmd []byte) ([
 	// Write command
 	if _, err := p.device.Write(cmd); err != nil {
 		return nil, fmt.Errorf("write command: %w", err)
+	}
+
+	// Apply inter-command delay if configured
+	if p.config.CommandDelay > 0 {
+		time.Sleep(p.config.CommandDelay)
 	}
 
 	// Read response (HID devices may return fixed-size packets like 64 bytes)
