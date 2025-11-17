@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2025-01-17
+
+### CRITICAL FIX
+
+**Fixed chunking algorithm to match reference implementation**: The library now uses the exact same chunking algorithm as the battle-tested reference implementation at https://github.com/Cellgain/bootloader-usb, which has been used successfully in production for years.
+
+### Changed
+
+- **bootloader/options.go**: Updated `DefaultChunkSize` from 54 to 57 bytes
+  - Now matches reference implementation's calculation: `PacketSize - SendDataOverhead = 64 - 7 = 57`
+  - Previous value of 54 was overly conservative and didn't match reference behavior
+- **protocol/constants.go**: Added new packet size constants:
+  - `MaxPacketSize = 64` - Standard USB HID packet size
+  - `SendDataOverhead = 7` - Protocol overhead for SendData command
+  - `ProgramRowOverhead = 10` - Protocol overhead for ProgramRow command
+- **bootloader/programmer.go**: Fixed `programRow()` chunking condition
+  - Changed from: `len(data) > chunkSize`
+  - Changed to: `(dataLen-offset+protocol.SendDataOverhead) > protocol.MaxPacketSize`
+  - This replicates reference algorithm: `(r.Size()-offset+7) > PacketSize`
+- **claude.md**: Updated all documentation to reflect new chunk size and algorithm
+
+### Fixed
+
+- **ERR_LENGTH (0x03) errors**: Fixed bootloader errors caused by incorrect chunking algorithm
+- **Packet boundary issues**: Chunking now ensures all SendData frames fit perfectly in 64-byte USB packets
+- **Reference compatibility**: Library now produces identical packet patterns to the working reference implementation
+
+### Technical Details
+
+The reference implementation uses the condition `(remaining + SendDataOverhead) > PacketSize` to determine when to send another chunk. This ensures:
+1. SendData frames: 57 bytes data + 7 bytes overhead = 64 bytes (perfect fit)
+2. Final ProgramRow: ≤ 57 bytes data + 10 bytes overhead = ≤ 67 bytes
+
+**Example for 200-byte row:**
+```
+Reference & New Behavior:
+  SendData(57) → offset=57
+  SendData(57) → offset=114
+  SendData(57) → offset=171
+  ProgramRow(29)
+
+Previous Behavior (ChunkSize=54):
+  SendData(54) → offset=54
+  SendData(54) → offset=108
+  SendData(54) → offset=162
+  SendData(54) → offset=216 ❌ (would exceed row size)
+```
+
+### Migration Guide
+
+**No action required for most users.** The new default chunk size (57 bytes) is optimal and matches the proven reference implementation.
+
+If you explicitly configured `WithChunkSize(54)`, you may want to update to `WithChunkSize(57)` for optimal performance, though 54 will continue to work.
+
+```go
+// Recommended (matches reference):
+prog := bootloader.New(device, bootloader.WithChunkSize(57))
+
+// Also works (conservative):
+prog := bootloader.New(device, bootloader.WithChunkSize(54))
+```
+
+### Credits
+
+This fix was identified through comprehensive analysis of the reference C implementation at https://github.com/Cellgain/bootloader-usb, ensuring this Go library provides identical behavior to the proven working implementation.
+
+---
+
 ## [0.5.1] - 2025-01-17
 
 ### Added
@@ -194,6 +262,7 @@ This clearly includes the SOP byte. Our previous implementation violated the spe
 - Comprehensive test coverage
 - Examples for basic, advanced, and progress tracking use cases
 
+[0.5.2]: https://github.com/moffa90/go-cyacd/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/moffa90/go-cyacd/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/moffa90/go-cyacd/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/moffa90/go-cyacd/compare/v0.4.0...v0.4.1

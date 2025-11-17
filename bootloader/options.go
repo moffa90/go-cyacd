@@ -11,8 +11,10 @@ const (
 	DefaultWriteTimeout = 5 * time.Second
 
 	// DefaultChunkSize is the default maximum data size per Send Data command
-	// Set to 64 bytes to fit within typical USB HID report sizes
-	DefaultChunkSize = 64
+	// Set to 57 bytes (64-byte USB packet - 7-byte SendData overhead)
+	// This matches the reference bootloader-usb implementation:
+	// https://github.com/Cellgain/bootloader-usb
+	DefaultChunkSize = 57
 
 	// DefaultRetries is the default number of retry attempts for failed commands
 	DefaultRetries = 3

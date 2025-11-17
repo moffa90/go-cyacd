@@ -213,18 +213,23 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 func (p *Programmer) programRow(ctx context.Context, row *cyacd.Row) error {
 	chunkSize := p.config.ChunkSize
 	data := row.Data
+	offset := 0
+	dataLen := len(data)
 
-	// If data is larger than chunk size, send in multiple chunks
-	for len(data) > chunkSize {
-		chunk := data[:chunkSize]
+	// Send chunks using SendData while (remaining + SendData overhead) exceeds packet size
+	// This replicates the reference implementation's algorithm:
+	// for (r.Size()-offset+7) > PacketSize
+	for (dataLen-offset+protocol.SendDataOverhead) > protocol.MaxPacketSize {
+		chunk := data[offset : offset+chunkSize]
 		if err := p.sendData(ctx, chunk); err != nil {
 			return fmt.Errorf("send data chunk: %w", err)
 		}
-		data = data[chunkSize:]
+		offset += chunkSize
 	}
 
-	// Program the final chunk (or entire row if small enough)
-	cmd, err := protocol.BuildProgramRowCmd(row.ArrayID, row.RowNum, data)
+	// Program the remaining data with ProgramRow command
+	remainingData := data[offset:]
+	cmd, err := protocol.BuildProgramRowCmd(row.ArrayID, row.RowNum, remainingData)
 	if err != nil {
 		return err
 	}

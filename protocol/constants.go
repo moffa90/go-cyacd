@@ -134,4 +134,15 @@ const (
 	// DefaultResponseBufferSize is the default buffer size for reading responses (512 bytes)
 	// Large enough to handle HID packets with padding
 	DefaultResponseBufferSize = 512
+
+	// MaxPacketSize is the standard USB HID packet size
+	MaxPacketSize = 64
+
+	// SendDataOverhead is the protocol overhead for SendData command:
+	// SOP(1) + CMD(1) + LEN(2) + CHECKSUM(2) + EOP(1) = 7 bytes
+	SendDataOverhead = 7
+
+	// ProgramRowOverhead is the protocol overhead for ProgramRow command:
+	// SOP(1) + CMD(1) + LEN(2) + ArrayID(1) + RowNum(2) + CHECKSUM(2) + EOP(1) = 10 bytes
+	ProgramRowOverhead = 10
 )
