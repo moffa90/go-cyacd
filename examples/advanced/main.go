@@ -111,7 +111,7 @@ func parseKey(keyHex string) ([]byte, error) {
 }
 
 func main() {
-	fmt.Println("=== Cypress Bootloader - Advanced Example ===\n")
+	fmt.Println("=== Cypress Bootloader - Advanced Example ===")
 
 	// Parse configuration
 	cfg := parseFlags()

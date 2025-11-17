@@ -3,19 +3,19 @@ package protocol
 // Checksum algorithm constants.
 const (
 	// ChecksumMask is the 16-bit mask used in checksum calculations
-	ChecksumMask = 0xFFFF
+	ChecksumMask uint16 = 0xFFFF
 
 	// CRC16Polynomial is the CRC-16-CCITT polynomial (0x1021)
-	CRC16Polynomial = 0x1021
+	CRC16Polynomial uint16 = 0x1021
 
 	// CRC16InitialValue is the CRC-16 initial value
-	CRC16InitialValue = 0xFFFF
+	CRC16InitialValue uint16 = 0xFFFF
 
 	// CRC16HighBitMask is the high bit mask for CRC-16 calculations
-	CRC16HighBitMask = 0x8000
+	CRC16HighBitMask uint16 = 0x8000
 
 	// BitsPerByte is the number of bits per byte
-	BitsPerByte = 8
+	BitsPerByte uint = 8
 )
 
 // calculatePacketChecksum computes the 16-bit checksum for a packet frame.
@@ -78,7 +78,7 @@ func calculateCRC16(data []byte) uint16 {
 
 	for _, b := range data {
 		crc ^= uint16(b) << BitsPerByte
-		for i := 0; i < BitsPerByte; i++ {
+		for i := uint(0); i < BitsPerByte; i++ {
 			if crc&CRC16HighBitMask != 0 {
 				crc = (crc << 1) ^ CRC16Polynomial
 			} else {

@@ -497,12 +497,12 @@ func TestProgramWithProgress(t *testing.T) {
 	}
 
 	// Check that we got all phases
-	phases := make(map[string]bool)
+	phases := make(map[Phase]bool)
 	for _, p := range progressCalls {
 		phases[p.Phase] = true
 	}
 
-	expectedPhases := []string{"entering", "programming", "verifying", "exiting", "complete"}
+	expectedPhases := []Phase{PhaseEntering, PhaseProgramming, PhaseVerifying, PhaseExiting, PhaseComplete}
 	for _, phase := range expectedPhases {
 		if !phases[phase] {
 			t.Errorf("missing phase: %s", phase)

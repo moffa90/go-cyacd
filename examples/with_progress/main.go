@@ -76,7 +76,7 @@ func main() {
 	// Setup progress tracking
 	progressBar := NewProgressBar(40)
 	startTime := time.Now()
-	var lastPhase string
+	var lastPhase bootloader.Phase
 
 	progressCallback := func(p bootloader.Progress) {
 		// Clear line and move cursor to beginning
@@ -87,7 +87,7 @@ func main() {
 			if lastPhase != "" {
 				fmt.Println() // New line after previous phase
 			}
-			fmt.Printf("\n📦 Phase: %s\n", strings.ToUpper(p.Phase))
+			fmt.Printf("\n📦 Phase: %s\n", strings.ToUpper(string(p.Phase)))
 			lastPhase = p.Phase
 		}
 
