@@ -2,16 +2,48 @@ package bootloader
 
 import "time"
 
+// Phase represents the current operation phase during firmware programming.
+// Use the exported Phase constants for type-safe comparisons.
+type Phase string
+
+// Phase constants for firmware programming operations.
+// Use these constants when checking Progress.Phase in your callbacks.
+//
+// Example:
+//
+//	callback := func(p bootloader.Progress) {
+//	    switch p.Phase {
+//	    case bootloader.PhaseEntering:
+//	        fmt.Println("Entering bootloader...")
+//	    case bootloader.PhaseProgramming:
+//	        fmt.Printf("Programming: %.1f%%\n", p.Percentage)
+//	    case bootloader.PhaseComplete:
+//	        fmt.Println("Done!")
+//	    }
+//	}
+const (
+	// PhaseEntering indicates the bootloader is being entered
+	PhaseEntering Phase = "entering"
+
+	// PhaseProgramming indicates flash rows are being programmed
+	PhaseProgramming Phase = "programming"
+
+	// PhaseVerifying indicates firmware is being verified
+	PhaseVerifying Phase = "verifying"
+
+	// PhaseExiting indicates the bootloader is being exited
+	PhaseExiting Phase = "exiting"
+
+	// PhaseComplete indicates the operation completed successfully
+	PhaseComplete Phase = "complete"
+)
+
 // Progress contains information about the programming progress.
 // Passed to ProgressCallback during programming operations.
 type Progress struct {
-	// Phase describes the current operation phase:
-	//   "entering"    - Entering bootloader mode
-	//   "programming" - Programming flash rows
-	//   "verifying"   - Verifying firmware
-	//   "exiting"     - Exiting bootloader
-	//   "complete"    - Operation completed successfully
-	Phase string
+	// Phase describes the current operation phase.
+	// Compare against exported Phase constants (PhaseEntering, PhaseProgramming, etc.)
+	Phase Phase
 
 	// CurrentRow is the current row being programmed (0-based)
 	CurrentRow int

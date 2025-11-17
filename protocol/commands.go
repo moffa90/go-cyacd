@@ -6,7 +6,7 @@ import (
 )
 
 // BuildEnterBootloaderCmd constructs an Enter Bootloader command frame.
-// The key must be exactly 6 bytes as specified in the Infineon protocol.
+// The key must be exactly BootloaderKeySize bytes as specified in the Infineon protocol.
 //
 // Frame structure:
 //
@@ -14,8 +14,8 @@ import (
 //
 // Returns the complete frame ready to send, or an error if validation fails.
 func BuildEnterBootloaderCmd(key []byte) ([]byte, error) {
-	if len(key) != 6 {
-		return nil, fmt.Errorf("key must be exactly 6 bytes, got %d", len(key))
+	if len(key) != BootloaderKeySize {
+		return nil, fmt.Errorf("key must be exactly %d bytes, got %d", BootloaderKeySize, len(key))
 	}
 
 	dataLen := uint16(len(key))

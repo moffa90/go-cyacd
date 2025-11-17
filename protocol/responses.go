@@ -55,12 +55,12 @@ func ParseResponse(frame []byte) (statusCode byte, data []byte, err error) {
 // ParseEnterBootloaderResponse parses the Enter Bootloader command response.
 // Returns device identification information.
 //
-// Data format (8 bytes):
+// Data format (EnterBootloaderResponseSize bytes):
 //
 //	[SILICON_ID(4)][SILICON_REV(1)][BOOTLOADER_VER(3)]
 func ParseEnterBootloaderResponse(data []byte) (*DeviceInfo, error) {
-	if len(data) != 8 {
-		return nil, fmt.Errorf("invalid data length for Enter Bootloader response: got %d bytes, expected 8", len(data))
+	if len(data) != EnterBootloaderResponseSize {
+		return nil, fmt.Errorf("invalid data length for Enter Bootloader response: got %d bytes, expected %d", len(data), EnterBootloaderResponseSize)
 	}
 
 	info := &DeviceInfo{
@@ -79,8 +79,8 @@ func ParseEnterBootloaderResponse(data []byte) (*DeviceInfo, error) {
 //
 //	[START_ROW(2)][END_ROW(2)]
 func ParseGetFlashSizeResponse(data []byte) (*FlashSize, error) {
-	if len(data) != 4 {
-		return nil, fmt.Errorf("invalid data length for Get Flash Size response: got %d bytes, expected 4", len(data))
+	if len(data) != GetFlashSizeResponseSize {
+		return nil, fmt.Errorf("invalid data length for Get Flash Size response: got %d bytes, expected %d", len(data), GetFlashSizeResponseSize)
 	}
 
 	size := &FlashSize{
@@ -98,8 +98,8 @@ func ParseGetFlashSizeResponse(data []byte) (*FlashSize, error) {
 //
 //	[ROW_CHECKSUM]
 func ParseVerifyRowResponse(data []byte) (byte, error) {
-	if len(data) != 1 {
-		return 0, fmt.Errorf("invalid data length for Verify Row response: got %d bytes, expected 1", len(data))
+	if len(data) != VerifyRowResponseSize {
+		return 0, fmt.Errorf("invalid data length for Verify Row response: got %d bytes, expected %d", len(data), VerifyRowResponseSize)
 	}
 
 	return data[0], nil
@@ -112,8 +112,8 @@ func ParseVerifyRowResponse(data []byte) (byte, error) {
 //   - Non-zero: application checksum is valid
 //   - Zero: checksums do not match (application invalid)
 func ParseVerifyChecksumResponse(data []byte) (bool, error) {
-	if len(data) != 1 {
-		return false, fmt.Errorf("invalid data length for Verify Checksum response: got %d bytes, expected 1", len(data))
+	if len(data) != VerifyChecksumResponseSize {
+		return false, fmt.Errorf("invalid data length for Verify Checksum response: got %d bytes, expected %d", len(data), VerifyChecksumResponseSize)
 	}
 
 	return data[0] != 0, nil
@@ -124,8 +124,8 @@ func ParseVerifyChecksumResponse(data []byte) (bool, error) {
 //
 // Data format (56 bytes): See Metadata type for field descriptions.
 func ParseGetMetadataResponse(data []byte) (*Metadata, error) {
-	if len(data) != 56 {
-		return nil, fmt.Errorf("invalid data length for Get Metadata response: got %d bytes, expected 56", len(data))
+	if len(data) != GetMetadataResponseSize {
+		return nil, fmt.Errorf("invalid data length for Get Metadata response: got %d bytes, expected %d", len(data), GetMetadataResponseSize)
 	}
 
 	// Parse metadata fields according to Infineon spec page 20-21
@@ -171,8 +171,8 @@ func ParseGetMetadataResponse(data []byte) (*Metadata, error) {
 //
 //	[VALID(1)][ACTIVE(1)]
 func ParseGetAppStatusResponse(data []byte) (*AppStatus, error) {
-	if len(data) != 2 {
-		return nil, fmt.Errorf("invalid data length for Get App Status response: got %d bytes, expected 2", len(data))
+	if len(data) != GetAppStatusResponseSize {
+		return nil, fmt.Errorf("invalid data length for Get App Status response: got %d bytes, expected %d", len(data), GetAppStatusResponseSize)
 	}
 
 	status := &AppStatus{

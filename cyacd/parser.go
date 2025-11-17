@@ -8,6 +8,30 @@ import (
 	"os"
 )
 
+// Constants for CYACD file format parsing.
+const (
+	// HeaderLength is the expected length of the header line in hex characters
+	HeaderLength = 12
+
+	// MinimumRowLength is the minimum length for a row line in hex characters
+	MinimumRowLength = 12
+
+	// MinimumRowDataBytes is the minimum number of bytes in a row
+	MinimumRowDataBytes = 6
+
+	// RowHeaderSize is the size of row metadata (arrayID + rowNum + dataLen)
+	RowHeaderSize = 5
+
+	// RowChecksumSize is the size of the row checksum field
+	RowChecksumSize = 1
+
+	// IntelHexHeaderLength is the length of the Intel HEX header in hex characters
+	IntelHexHeaderLength = 10
+
+	// DefaultRowCapacity is the default initial capacity for the rows slice
+	DefaultRowCapacity = 256
+)
+
 // Parse parses a .cyacd file from the given file path.
 // Returns the complete firmware structure or an error if parsing fails.
 //
@@ -98,8 +122,8 @@ func ParseReader(r io.Reader) (*Firmware, error) {
 //
 // Example: "1E9602AA00" = SiliconID: 0x1E9602AA, Rev: 0x00, Checksum: 0x00
 func parseHeader(line string) (*Firmware, error) {
-	if len(line) != 12 {
-		return nil, fmt.Errorf("invalid header length: got %d characters, expected 12", len(line))
+	if len(line) != HeaderLength {
+		return nil, fmt.Errorf("invalid header length: got %d characters, expected %d", len(line), HeaderLength)
 	}
 
 	data, err := hex.DecodeString(line)
@@ -115,7 +139,7 @@ func parseHeader(line string) (*Firmware, error) {
 		SiliconID:    siliconID,
 		SiliconRev:   data[4],
 		ChecksumType: data[5],
-		Rows:         make([]*Row, 0, 256), // Reasonable initial capacity
+		Rows:         make([]*Row, 0, DefaultRowCapacity),
 	}
 
 	// Validate checksum type
@@ -142,9 +166,9 @@ func parseHeader(line string) (*Firmware, error) {
 //	Data: [0x01, 0x02, 0x03, 0x04]
 //	Checksum: 0x0E
 func parseRow(line string) (*Row, error) {
-	// Minimum row: arrayID(2) + rowNum(4) + dataLen(4) + checksum(2) = 12 chars
-	if len(line) < 12 {
-		return nil, fmt.Errorf("row too short: got %d characters, minimum is 12", len(line))
+	// Minimum row: arrayID(2) + rowNum(4) + dataLen(4) + checksum(2) = MinimumRowLength chars
+	if len(line) < MinimumRowLength {
+		return nil, fmt.Errorf("row too short: got %d characters, minimum is %d", len(line), MinimumRowLength)
 	}
 
 	data, err := hex.DecodeString(line)
@@ -152,21 +176,21 @@ func parseRow(line string) (*Row, error) {
 		return nil, fmt.Errorf("invalid hex data: %w", err)
 	}
 
-	if len(data) < 6 {
-		return nil, fmt.Errorf("row data too short: got %d bytes, minimum is 6", len(data))
+	if len(data) < MinimumRowDataBytes {
+		return nil, fmt.Errorf("row data too short: got %d bytes, minimum is %d", len(data), MinimumRowDataBytes)
 	}
 
 	arrayID := data[0]
 	rowNum := uint16(data[1]) | uint16(data[2])<<8    // Little-endian
 	dataLen := uint16(data[3]) | uint16(data[4])<<8   // Little-endian
 
-	expectedLen := int(6 + dataLen) // header(5) + data + checksum(1)
+	expectedLen := int(RowHeaderSize + RowChecksumSize + dataLen)
 	if len(data) != expectedLen {
-		return nil, fmt.Errorf("data length mismatch: got %d bytes, expected %d (header=5 + data=%d + checksum=1)",
-			len(data), expectedLen, dataLen)
+		return nil, fmt.Errorf("data length mismatch: got %d bytes, expected %d (header=%d + data=%d + checksum=%d)",
+			len(data), expectedLen, RowHeaderSize, dataLen, RowChecksumSize)
 	}
 
-	rowData := data[5 : 5+dataLen]
+	rowData := data[RowHeaderSize : RowHeaderSize+dataLen]
 	checksum := data[len(data)-1]
 
 	// Verify checksum
@@ -207,14 +231,14 @@ func parseIntelHexRow(line string) (*Row, error) {
 
 	line = line[1:] // Strip ':'
 
-	// Minimum: Intel HEX header (10 chars) + some data
-	if len(line) < 12 {
-		return nil, fmt.Errorf("hybrid row too short: got %d characters, minimum is 12", len(line))
+	// Minimum: Intel HEX header + some data
+	if len(line) < MinimumRowLength {
+		return nil, fmt.Errorf("hybrid row too short: got %d characters, minimum is %d", len(line), MinimumRowLength)
 	}
 
-	// Decode the Intel HEX header (first 10 hex chars = 5 bytes)
+	// Decode the Intel HEX header (first IntelHexHeaderLength hex chars = 5 bytes)
 	// Format: LLAAAATTCC where LL=length, AAAA=address, TT=type, CC=checksum
-	headerHex := line[:10]
+	headerHex := line[:IntelHexHeaderLength]
 	headerData, err := hex.DecodeString(headerHex)
 	if err != nil {
 		return nil, fmt.Errorf("invalid Intel HEX header: %w", err)
@@ -224,7 +248,7 @@ func parseIntelHexRow(line string) (*Row, error) {
 	address := uint16(headerData[1])<<8 | uint16(headerData[2])
 
 	// The remaining data after the Intel HEX header is the raw firmware
-	dataHex := line[10:]
+	dataHex := line[IntelHexHeaderLength:]
 	data, err := hex.DecodeString(dataHex)
 	if err != nil {
 		return nil, fmt.Errorf("invalid hex data: %w", err)

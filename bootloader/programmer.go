@@ -64,15 +64,15 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 	if fw == nil {
 		return fmt.Errorf("firmware cannot be nil")
 	}
-	if len(key) != 6 {
-		return fmt.Errorf("key must be exactly 6 bytes, got %d", len(key))
+	if len(key) != protocol.BootloaderKeySize {
+		return fmt.Errorf("key must be exactly %d bytes, got %d", protocol.BootloaderKeySize, len(key))
 	}
 
 	startTime := time.Now()
 
 	// Phase 1: Enter bootloader
 	p.reportProgress(Progress{
-		Phase:      "entering",
+		Phase:      PhaseEntering,
 		Percentage: 0,
 		TotalRows:  len(fw.Rows),
 	})
@@ -99,7 +99,7 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 
 	// Phase 3: Get flash size and validate rows
 	p.reportProgress(Progress{
-		Phase:      "programming",
+		Phase:      PhaseProgramming,
 		Percentage: 2,
 		TotalRows:  len(fw.Rows),
 	})
@@ -155,7 +155,7 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 		// Report progress (2% to 90%)
 		percentage := 2 + (float64(i+1)/float64(len(fw.Rows)))*88
 		p.reportProgress(Progress{
-			Phase:        "programming",
+			Phase:        PhaseProgramming,
 			CurrentRow:   i + 1,
 			TotalRows:    len(fw.Rows),
 			Percentage:   percentage,
@@ -166,7 +166,7 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 
 	// Phase 5: Verify application checksum
 	p.reportProgress(Progress{
-		Phase:       "verifying",
+		Phase:       PhaseVerifying,
 		CurrentRow:  len(fw.Rows),
 		TotalRows:   len(fw.Rows),
 		Percentage:  92,
@@ -179,7 +179,7 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 
 	// Phase 6: Exit bootloader
 	p.reportProgress(Progress{
-		Phase:       "exiting",
+		Phase:       PhaseExiting,
 		CurrentRow:  len(fw.Rows),
 		TotalRows:   len(fw.Rows),
 		Percentage:  95,
@@ -192,7 +192,7 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 
 	// Complete
 	p.reportProgress(Progress{
-		Phase:        "complete",
+		Phase:        PhaseComplete,
 		CurrentRow:   len(fw.Rows),
 		TotalRows:    len(fw.Rows),
 		Percentage:   100,
@@ -446,7 +446,7 @@ func (p *Programmer) sendCommandWithResponse(ctx context.Context, cmd []byte) ([
 	}
 
 	// Read response (HID devices may return fixed-size packets like 64 bytes)
-	response := make([]byte, 512)
+	response := make([]byte, protocol.DefaultResponseBufferSize)
 	n, err := p.device.Read(response)
 	if err != nil {
 		return nil, fmt.Errorf("read response: %w", err)

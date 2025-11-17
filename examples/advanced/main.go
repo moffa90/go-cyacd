@@ -147,16 +147,16 @@ func main() {
 		bootloader.WithLogger(logger),
 		bootloader.WithProgressCallback(func(p bootloader.Progress) {
 			switch p.Phase {
-			case "entering":
+			case bootloader.PhaseEntering:
 				fmt.Printf("⏳ Entering bootloader mode...\n")
-			case "programming":
+			case bootloader.PhaseProgramming:
 				fmt.Printf("📝 Programming: %.1f%% - Row %d/%d\n",
 					p.Percentage, p.CurrentRow, p.TotalRows)
-			case "verifying":
+			case bootloader.PhaseVerifying:
 				fmt.Printf("✓ Verifying application...\n")
-			case "exiting":
+			case bootloader.PhaseExiting:
 				fmt.Printf("🚀 Exiting bootloader...\n")
-			case "complete":
+			case bootloader.PhaseComplete:
 				fmt.Printf("✅ Programming complete!\n")
 			}
 		}),

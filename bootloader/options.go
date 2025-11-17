@@ -2,6 +2,25 @@ package bootloader
 
 import "time"
 
+// Default configuration values.
+const (
+	// DefaultReadTimeout is the default timeout for read operations
+	DefaultReadTimeout = 5 * time.Second
+
+	// DefaultWriteTimeout is the default timeout for write operations
+	DefaultWriteTimeout = 5 * time.Second
+
+	// DefaultChunkSize is the default maximum data size per Send Data command
+	// Set to 64 bytes to fit within typical USB HID report sizes
+	DefaultChunkSize = 64
+
+	// DefaultRetries is the default number of retry attempts for failed commands
+	DefaultRetries = 3
+
+	// MaxChunkSize is the maximum allowed chunk size per packet
+	MaxChunkSize = 256
+)
+
 // Config holds the programmer configuration.
 type Config struct {
 	// ProgressCallback is called during programming to report progress (optional)
@@ -35,10 +54,10 @@ type Config struct {
 // defaultConfig returns the default configuration.
 func defaultConfig() Config {
 	return Config{
-		ReadTimeout:        5 * time.Second,
-		WriteTimeout:       5 * time.Second,
-		ChunkSize:          64, // Default chunk size
-		Retries:            3,
+		ReadTimeout:        DefaultReadTimeout,
+		WriteTimeout:       DefaultWriteTimeout,
+		ChunkSize:          DefaultChunkSize,
+		Retries:            DefaultRetries,
 		VerifyAfterProgram: true,
 	}
 }
@@ -107,14 +126,15 @@ func WithWriteTimeout(timeout time.Duration) Option {
 }
 
 // WithChunkSize sets the maximum data size per Send Data command.
-// Default is 64 bytes.
+// Default is DefaultChunkSize (64 bytes).
+// Maximum allowed is MaxChunkSize (256 bytes).
 //
 // Example:
 //
 //	prog := bootloader.New(device, bootloader.WithChunkSize(128))
 func WithChunkSize(size int) Option {
 	return func(c *Config) {
-		if size > 0 && size <= 256 {
+		if size > 0 && size <= MaxChunkSize {
 			c.ChunkSize = size
 		}
 	}

@@ -107,3 +107,31 @@ const MaxDataSize = 256
 // DefaultChunkSize is the recommended chunk size for SendData operations.
 // Set to 57 bytes to fit within 64-byte USB packets (64 - 7 byte overhead).
 const DefaultChunkSize = 57
+
+// Response data sizes per Infineon bootloader protocol specification.
+const (
+	// EnterBootloaderResponseSize is the data size for Enter Bootloader response (8 bytes)
+	EnterBootloaderResponseSize = 8
+
+	// GetFlashSizeResponseSize is the data size for Get Flash Size response (4 bytes)
+	GetFlashSizeResponseSize = 4
+
+	// VerifyRowResponseSize is the data size for Verify Row response (1 byte)
+	VerifyRowResponseSize = 1
+
+	// VerifyChecksumResponseSize is the data size for Verify Checksum response (1 byte)
+	VerifyChecksumResponseSize = 1
+
+	// GetMetadataResponseSize is the data size for Get Metadata response (56 bytes)
+	GetMetadataResponseSize = 56
+
+	// GetAppStatusResponseSize is the data size for Get App Status response (2 bytes)
+	GetAppStatusResponseSize = 2
+
+	// BootloaderKeySize is the required size for bootloader key (6 bytes)
+	BootloaderKeySize = 6
+
+	// DefaultResponseBufferSize is the default buffer size for reading responses (512 bytes)
+	// Large enough to handle HID packets with padding
+	DefaultResponseBufferSize = 512
+)
