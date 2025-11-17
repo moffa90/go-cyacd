@@ -417,20 +417,50 @@ func (p *Programmer) sendCommand(ctx context.Context, cmd []byte) error {
 }
 
 // sendCommandWithResponse sends a command and waits for a response.
+// Handles HID packet padding by extracting only the actual protocol frame.
 func (p *Programmer) sendCommandWithResponse(ctx context.Context, cmd []byte) ([]byte, error) {
 	// Write command
 	if _, err := p.device.Write(cmd); err != nil {
 		return nil, fmt.Errorf("write command: %w", err)
 	}
 
-	// Read response (assume max response size of 512 bytes)
+	// Read response (HID devices may return fixed-size packets like 64 bytes)
 	response := make([]byte, 512)
 	n, err := p.device.Read(response)
 	if err != nil {
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
-	return response[:n], nil
+	// Extract the actual protocol frame from the HID packet
+	// Frame format: [SOP][STATUS][LEN_L][LEN_H][DATA...][CHECKSUM_L][CHECKSUM_H][EOP]
+	if n < protocol.MinFrameSize {
+		return nil, fmt.Errorf("response too short: got %d bytes, minimum is %d", n, protocol.MinFrameSize)
+	}
+
+	// Validate start of packet
+	if response[0] != protocol.StartOfPacket {
+		return nil, fmt.Errorf("invalid start of packet: got 0x%02X, expected 0x%02X", response[0], protocol.StartOfPacket)
+	}
+
+	// Read data length from frame (bytes 2-3, little-endian)
+	dataLen := uint16(response[2]) | uint16(response[3])<<8
+
+	// Calculate actual frame size
+	frameSize := int(protocol.MinFrameSize + dataLen)
+
+	// Ensure we have enough data
+	if n < frameSize {
+		return nil, fmt.Errorf("incomplete frame: got %d bytes, expected %d", n, frameSize)
+	}
+
+	// Validate end of packet
+	if response[frameSize-1] != protocol.EndOfPacket {
+		return nil, fmt.Errorf("invalid end of packet at position %d: got 0x%02X, expected 0x%02X",
+			frameSize-1, response[frameSize-1], protocol.EndOfPacket)
+	}
+
+	// Return only the actual protocol frame (not the HID padding)
+	return response[:frameSize], nil
 }
 
 // reportProgress calls the progress callback if configured.
