@@ -419,7 +419,7 @@ func (p *Programmer) sendCommand(ctx context.Context, cmd []byte) error {
 }
 
 // sendCommandWithResponse sends a command and waits for a response.
-// Handles HID packet padding by extracting only the actual protocol frame.
+// Handles HID packet padding and report IDs by extracting only the actual protocol frame.
 func (p *Programmer) sendCommandWithResponse(ctx context.Context, cmd []byte) ([]byte, error) {
 	// Write command
 	if _, err := p.device.Write(cmd); err != nil {
@@ -435,34 +435,43 @@ func (p *Programmer) sendCommandWithResponse(ctx context.Context, cmd []byte) ([
 
 	// Extract the actual protocol frame from the HID packet
 	// Frame format: [SOP][STATUS][LEN_L][LEN_H][DATA...][CHECKSUM_L][CHECKSUM_H][EOP]
+	// Some HID devices prepend a Report ID byte (often 0x00), so we need to detect and skip it
 	if n < protocol.MinFrameSize {
 		return nil, fmt.Errorf("response too short: got %d bytes, minimum is %d", n, protocol.MinFrameSize)
 	}
 
-	// Validate start of packet
-	if response[0] != protocol.StartOfPacket {
-		return nil, fmt.Errorf("invalid start of packet: got 0x%02X, expected 0x%02X", response[0], protocol.StartOfPacket)
+	// Detect HID Report ID: if byte 0 is not SOP but byte 1 is, then byte 0 is a report ID
+	offset := 0
+	if response[0] != protocol.StartOfPacket && n > protocol.MinFrameSize && response[1] == protocol.StartOfPacket {
+		// HID Report ID detected at byte 0, skip it
+		offset = 1
+		p.logDebug("HID report ID detected", "report_id", fmt.Sprintf("0x%02X", response[0]))
 	}
 
-	// Read data length from frame (bytes 2-3, little-endian)
-	dataLen := uint16(response[2]) | uint16(response[3])<<8
+	// Validate start of packet
+	if response[offset] != protocol.StartOfPacket {
+		return nil, fmt.Errorf("invalid start of packet: got 0x%02X, expected 0x%02X", response[offset], protocol.StartOfPacket)
+	}
+
+	// Read data length from frame (bytes 2-3 after offset, little-endian)
+	dataLen := uint16(response[offset+2]) | uint16(response[offset+3])<<8
 
 	// Calculate actual frame size
 	frameSize := int(protocol.MinFrameSize + dataLen)
 
 	// Ensure we have enough data
-	if n < frameSize {
-		return nil, fmt.Errorf("incomplete frame: got %d bytes, expected %d", n, frameSize)
+	if n < offset+frameSize {
+		return nil, fmt.Errorf("incomplete frame: got %d bytes, expected %d (with offset %d)", n, offset+frameSize, offset)
 	}
 
 	// Validate end of packet
-	if response[frameSize-1] != protocol.EndOfPacket {
+	if response[offset+frameSize-1] != protocol.EndOfPacket {
 		return nil, fmt.Errorf("invalid end of packet at position %d: got 0x%02X, expected 0x%02X",
-			frameSize-1, response[frameSize-1], protocol.EndOfPacket)
+			offset+frameSize-1, response[offset+frameSize-1], protocol.EndOfPacket)
 	}
 
-	// Return only the actual protocol frame (not the HID padding)
-	return response[:frameSize], nil
+	// Return only the actual protocol frame (not the report ID or HID padding)
+	return response[offset : offset+frameSize], nil
 }
 
 // reportProgress calls the progress callback if configured.
