@@ -17,14 +17,15 @@ func (e *DeviceMismatchError) Error() string {
 
 // RowOutOfRangeError indicates that a firmware row is outside the device's flash range.
 type RowOutOfRangeError struct {
-	RowNum uint16
-	MinRow uint16
-	MaxRow uint16
+	ArrayID uint8
+	RowNum  uint16
+	MinRow  uint16
+	MaxRow  uint16
 }
 
 func (e *RowOutOfRangeError) Error() string {
-	return fmt.Sprintf("row %d is out of range: valid range is %d-%d",
-		e.RowNum, e.MinRow, e.MaxRow)
+	return fmt.Sprintf("row %d (array %d) is out of range: valid range is %d-%d",
+		e.RowNum, e.ArrayID, e.MinRow, e.MaxRow)
 }
 
 // ChecksumMismatchError indicates that a row checksum verification failed.
@@ -41,9 +42,9 @@ func (e *ChecksumMismatchError) Error() string {
 
 // VerificationError indicates that the application checksum verification failed.
 type VerificationError struct {
-	Message string
+	Reason string
 }
 
 func (e *VerificationError) Error() string {
-	return fmt.Sprintf("firmware verification failed: %s", e.Message)
+	return fmt.Sprintf("application verification failed: %s", e.Reason)
 }

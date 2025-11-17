@@ -69,6 +69,9 @@ const (
 	// ErrCommand indicates command is not recognized
 	ErrCommand = 0x05
 
+	// ErrKey indicates bootloader key is invalid
+	ErrKey = 0x06
+
 	// ErrChecksum indicates packet checksum doesn't match expected value
 	ErrChecksum = 0x08
 

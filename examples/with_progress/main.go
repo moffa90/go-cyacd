@@ -45,7 +45,7 @@ func (pb *ProgressBar) Render(percentage float64) string {
 }
 
 func main() {
-	fmt.Println("=== Cypress Bootloader - Progress Tracking Example ===\n")
+	fmt.Println("=== Cypress Bootloader - Progress Tracking Example ===")
 
 	// Check command line arguments
 	if len(os.Args) < 2 {

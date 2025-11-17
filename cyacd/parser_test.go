@@ -23,8 +23,8 @@ func TestParseReader(t *testing.T) {
 	}{
 		{
 			name: "valid simple firmware",
-			input: "1E9602AA00\n" +
-				"000000040401020304F6\n",
+			input: "1E9602AA0000\n" +
+				"000000040001020304F2\n",
 			want: &Firmware{
 				SiliconID:    0x1E9602AA,
 				SiliconRev:   0x00,
@@ -34,7 +34,7 @@ func TestParseReader(t *testing.T) {
 						ArrayID:  0x00,
 						RowNum:   0x0000,
 						Data:     []byte{0x01, 0x02, 0x03, 0x04},
-						Checksum: 0xF6,
+						Checksum: 0xF2,
 					},
 				},
 			},
@@ -42,9 +42,9 @@ func TestParseReader(t *testing.T) {
 		},
 		{
 			name: "multiple rows",
-			input: "1E9602AA00\n" +
-				"000000040401020304F6\n" +
-				"0001000404050607080A\n",
+			input: "1E9602AA0000\n" +
+				"000000040001020304F2\n" +
+				"000100040005060708E1\n",
 			want: &Firmware{
 				SiliconID:    0x1E9602AA,
 				SiliconRev:   0x00,
@@ -54,13 +54,13 @@ func TestParseReader(t *testing.T) {
 						ArrayID:  0x00,
 						RowNum:   0x0000,
 						Data:     []byte{0x01, 0x02, 0x03, 0x04},
-						Checksum: 0xF6,
+						Checksum: 0xF2,
 					},
 					{
 						ArrayID:  0x00,
 						RowNum:   0x0001,
 						Data:     []byte{0x05, 0x06, 0x07, 0x08},
-						Checksum: 0x0A,
+						Checksum: 0xE1,
 					},
 				},
 			},
@@ -68,9 +68,9 @@ func TestParseReader(t *testing.T) {
 		},
 		{
 			name: "with empty lines",
-			input: "1E9602AA00\n" +
+			input: "1E9602AA0000\n" +
 				"\n" +
-				"000000040401020304F6\n" +
+				"000000040001020304F2\n" +
 				"\n",
 			want: &Firmware{
 				SiliconID:    0x1E9602AA,
@@ -81,7 +81,7 @@ func TestParseReader(t *testing.T) {
 						ArrayID:  0x00,
 						RowNum:   0x0000,
 						Data:     []byte{0x01, 0x02, 0x03, 0x04},
-						Checksum: 0xF6,
+						Checksum: 0xF2,
 					},
 				},
 			},
@@ -95,7 +95,7 @@ func TestParseReader(t *testing.T) {
 		},
 		{
 			name:    "no rows",
-			input:   "1E9602AA00\n",
+			input:   "1E9602AA0000\n",
 			wantErr: true,
 			errMsg:  "no rows found",
 		},
@@ -113,22 +113,22 @@ func TestParseReader(t *testing.T) {
 		},
 		{
 			name: "invalid checksum type",
-			input: "1E9602AA99\n" +
+			input: "1E9602AA0099\n" +
 				"000000040401020304F6\n",
 			wantErr: true,
 			errMsg:  "invalid checksum type",
 		},
 		{
 			name: "row too short",
-			input: "1E9602AA00\n" +
+			input: "1E9602AA0000\n" +
 				"0000\n",
 			wantErr: true,
 			errMsg:  "row too short",
 		},
 		{
 			name: "row checksum mismatch",
-			input: "1E9602AA00\n" +
-				"000000040401020304FF\n", // Wrong checksum
+			input: "1E9602AA0000\n" +
+				"000000040001020304FF\n", // Wrong checksum
 			wantErr: true,
 			errMsg:  "checksum mismatch",
 		},
@@ -203,7 +203,7 @@ func TestParseHeader(t *testing.T) {
 	}{
 		{
 			name: "valid header",
-			line: "1E9602AA00",
+			line: "1E9602AA0000",
 			want: &Firmware{
 				SiliconID:    0x1E9602AA,
 				SiliconRev:   0x00,
@@ -213,7 +213,7 @@ func TestParseHeader(t *testing.T) {
 		},
 		{
 			name: "valid header with CRC checksum",
-			line: "1E9602AA01",
+			line: "1E9602AA0001",
 			want: &Firmware{
 				SiliconID:    0x1E9602AA,
 				SiliconRev:   0x00,
@@ -229,7 +229,7 @@ func TestParseHeader(t *testing.T) {
 		},
 		{
 			name:    "too long",
-			line:    "1E9602AA0000",
+			line:    "1E9602AA000000",
 			wantErr: true,
 			errMsg:  "invalid header length",
 		},
@@ -241,7 +241,7 @@ func TestParseHeader(t *testing.T) {
 		},
 		{
 			name:    "invalid checksum type",
-			line:    "1E9602AA99",
+			line:    "1E9602AA0099",
 			wantErr: true,
 			errMsg:  "invalid checksum type",
 		},
@@ -290,23 +290,23 @@ func TestParseRow(t *testing.T) {
 	}{
 		{
 			name: "valid row",
-			line: "000000040401020304F6",
+			line: "000000040001020304F2",
 			want: &Row{
 				ArrayID:  0x00,
 				RowNum:   0x0000,
 				Data:     []byte{0x01, 0x02, 0x03, 0x04},
-				Checksum: 0xF6,
+				Checksum: 0xF2,
 			},
 			wantErr: false,
 		},
 		{
 			name: "different array and row",
-			line: "01FF010404AABBCCDDFE",
+			line: "01FF010400AABBCCDDED",
 			want: &Row{
 				ArrayID:  0x01,
 				RowNum:   0x01FF,
 				Data:     []byte{0xAA, 0xBB, 0xCC, 0xDD},
-				Checksum: 0xFE,
+				Checksum: 0xED,
 			},
 			wantErr: false,
 		},
@@ -324,13 +324,13 @@ func TestParseRow(t *testing.T) {
 		},
 		{
 			name:    "length mismatch",
-			line:    "000000080401020304F6", // Says 8 bytes but only 4
+			line:    "000000080001020304F6", // Says 8 bytes but only 4
 			wantErr: true,
 			errMsg:  "data length mismatch",
 		},
 		{
 			name:    "checksum mismatch",
-			line:    "000000040401020304FF", // Wrong checksum
+			line:    "000000040001020304FF", // Wrong checksum
 			wantErr: true,
 			errMsg:  "checksum mismatch",
 		},
@@ -381,8 +381,8 @@ func TestCalculateRowChecksum(t *testing.T) {
 	}{
 		{
 			name:     "simple case",
-			data:     []byte{0x00, 0x00, 0x00, 0x04, 0x04, 0x01, 0x02, 0x03, 0x04},
-			expected: 0xF6,
+			data:     []byte{0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x02, 0x03, 0x04},
+			expected: 0xF2,
 		},
 		{
 			name:     "zeros",

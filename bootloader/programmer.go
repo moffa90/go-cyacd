@@ -121,9 +121,10 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 		for _, row := range fw.Rows {
 			if row.RowNum < flashSize.StartRow || row.RowNum > flashSize.EndRow {
 				return &RowOutOfRangeError{
-					RowNum: row.RowNum,
-					MinRow: flashSize.StartRow,
-					MaxRow: flashSize.EndRow,
+					ArrayID: row.ArrayID,
+					RowNum:  row.RowNum,
+					MinRow:  flashSize.StartRow,
+					MaxRow:  flashSize.EndRow,
 				}
 			}
 		}
@@ -172,7 +173,7 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 		ElapsedTime: time.Since(startTime),
 	})
 
-	if err := p.VerifyChecksum(ctx); err != nil {
+	if _, err := p.VerifyChecksum(ctx); err != nil {
 		return fmt.Errorf("verify application: %w", err)
 	}
 
@@ -373,24 +374,25 @@ func (p *Programmer) GetFlashSize(ctx context.Context, arrayID byte) (*protocol.
 }
 
 // VerifyChecksum verifies the entire application checksum.
-func (p *Programmer) VerifyChecksum(ctx context.Context) error {
+// Returns true if the application checksum is valid, false otherwise.
+func (p *Programmer) VerifyChecksum(ctx context.Context) (bool, error) {
 	cmd, err := protocol.BuildVerifyChecksumCmd()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	response, err := p.sendCommandWithResponse(ctx, cmd)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	statusCode, data, err := protocol.ParseResponse(response)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if statusCode != protocol.StatusSuccess {
-		return &protocol.ProtocolError{
+		return false, &protocol.ProtocolError{
 			Operation:  "verify checksum",
 			StatusCode: statusCode,
 		}
@@ -398,16 +400,16 @@ func (p *Programmer) VerifyChecksum(ctx context.Context) error {
 
 	valid, err := protocol.ParseVerifyChecksumResponse(data)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if !valid {
-		return &VerificationError{
-			Message: "application checksum is invalid",
+		return false, &VerificationError{
+			Reason: "application checksum is invalid",
 		}
 	}
 
-	return nil
+	return true, nil
 }
 
 // sendCommand sends a command and expects no response (fire-and-forget).

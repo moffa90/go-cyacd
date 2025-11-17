@@ -253,9 +253,9 @@ func calculateChecksum(data []byte) uint16 {
 }
 
 func main() {
-	fmt.Println("=== Cypress Bootloader - Mock Device Example ===\n")
+	fmt.Println("=== Cypress Bootloader - Mock Device Example ===")
 	fmt.Println("This example demonstrates how to implement a realistic mock device")
-	fmt.Println("that simulates actual bootloader behavior for testing.\n")
+	fmt.Println("that simulates actual bootloader behavior for testing.")
 
 	// Create a simple test firmware
 	firmware := &cyacd.Firmware{
@@ -296,7 +296,7 @@ func main() {
 	)
 
 	// Program the device
-	fmt.Println("Starting programming with mock device...\n")
+	fmt.Println("Starting programming with mock device...")
 	key := []byte{0x0A, 0x1B, 0x2C, 0x3D, 0x4E, 0x5F}
 
 	err := prog.Program(context.Background(), firmware, key)
