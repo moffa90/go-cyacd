@@ -37,7 +37,7 @@ func ParseResponse(frame []byte) (statusCode byte, data []byte, err error) {
 
 	// Verify checksum
 	checksumExpected := binary.LittleEndian.Uint16(frame[len(frame)-3 : len(frame)-1])
-	checksumActual := calculatePacketChecksum(frame[1 : len(frame)-3])
+	checksumActual := calculatePacketChecksum(frame[0 : len(frame)-3])
 
 	if checksumExpected != checksumActual {
 		return 0, nil, fmt.Errorf("checksum mismatch: got 0x%04X, expected 0x%04X",

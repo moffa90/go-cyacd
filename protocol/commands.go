@@ -35,8 +35,8 @@ func BuildEnterBootloaderCmd(key []byte) ([]byte, error) {
 	// Data (6-byte key)
 	frame = append(frame, key...)
 
-	// Calculate and append checksum (exclude SOP, include everything else up to checksum)
-	checksum := calculatePacketChecksum(frame[1:])
+	// Calculate and append checksum (per Infineon spec: includes SOP through DATA)
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -66,7 +66,7 @@ func BuildGetFlashSizeCmd(arrayID byte) ([]byte, error) {
 
 	frame = append(frame, arrayID)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -112,7 +112,7 @@ func BuildProgramRowCmd(arrayID byte, rowNum uint16, data []byte) ([]byte, error
 
 	frame = append(frame, data...)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -151,7 +151,7 @@ func BuildSendDataCmd(data []byte) ([]byte, error) {
 
 	frame = append(frame, data...)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -184,7 +184,7 @@ func BuildVerifyRowCmd(arrayID byte, rowNum uint16) ([]byte, error) {
 	binary.LittleEndian.PutUint16(rowBytes, rowNum)
 	frame = append(frame, rowBytes...)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -211,7 +211,7 @@ func BuildVerifyChecksumCmd() ([]byte, error) {
 	binary.LittleEndian.PutUint16(lenBytes, dataLen)
 	frame = append(frame, lenBytes...)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -244,7 +244,7 @@ func BuildEraseRowCmd(arrayID byte, rowNum uint16) ([]byte, error) {
 	binary.LittleEndian.PutUint16(rowBytes, rowNum)
 	frame = append(frame, rowBytes...)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -273,7 +273,7 @@ func BuildSyncBootloaderCmd() ([]byte, error) {
 	binary.LittleEndian.PutUint16(lenBytes, dataLen)
 	frame = append(frame, lenBytes...)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -303,7 +303,7 @@ func BuildExitBootloaderCmd() ([]byte, error) {
 	binary.LittleEndian.PutUint16(lenBytes, dataLen)
 	frame = append(frame, lenBytes...)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -332,7 +332,7 @@ func BuildGetMetadataCmd(appNum byte) ([]byte, error) {
 
 	frame = append(frame, appNum)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -361,7 +361,7 @@ func BuildGetAppStatusCmd(appNum byte) ([]byte, error) {
 
 	frame = append(frame, appNum)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -390,7 +390,7 @@ func BuildSetActiveAppCmd(appNum byte) ([]byte, error) {
 
 	frame = append(frame, appNum)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)

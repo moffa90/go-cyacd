@@ -20,7 +20,7 @@ func buildTestResponse(statusCode byte, data []byte) []byte {
 
 	frame = append(frame, data...)
 
-	checksum := calculatePacketChecksum(frame[1:])
+	checksum := calculatePacketChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)
@@ -84,7 +84,7 @@ func TestParseResponse(t *testing.T) {
 				StartOfPacket,
 				StatusSuccess,
 				0x00, 0x00, // length
-				0xFF, 0xFF, // wrong checksum
+				0xAA, 0xBB, // wrong checksum (correct would be 0xFF 0xFF)
 				EndOfPacket,
 			},
 			wantErr: true,

@@ -89,7 +89,7 @@ func buildResponseFrame(statusCode byte, data []byte) []byte {
 
 	frame = append(frame, data...)
 
-	checksum := calculateChecksum(frame[1:])
+	checksum := calculateChecksum(frame[0:])
 	checksumBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(checksumBytes, checksum)
 	frame = append(frame, checksumBytes...)

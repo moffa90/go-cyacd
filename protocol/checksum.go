@@ -21,8 +21,8 @@ const (
 // calculatePacketChecksum computes the 16-bit checksum for a packet frame.
 // Uses basic summation per Infineon spec: sum all bytes, then 2's complement.
 //
-// The checksum is calculated over all bytes from CMD through DATA,
-// excluding SOP, CHECKSUM, and EOP fields.
+// Per Infineon AN60317 specification, the checksum is calculated over all bytes
+// from SOP through DATA, excluding only CHECKSUM and EOP fields.
 func calculatePacketChecksum(data []byte) uint16 {
 	var sum uint16
 	for _, b := range data {
