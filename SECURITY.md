@@ -14,9 +14,11 @@ Starting with v1.0.0, we follow semantic versioning and provide security updates
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in go-cyacd, please report it by emailing:
+If you discover a security vulnerability in go-cyacd, please report it by:
 
-**Security Contact:** moffa90@gmail.com
+**Opening a GitHub Issue:** https://github.com/moffa90/go-cyacd/issues/new
+
+Use the "Bug Report" template and add the **security** label to your issue.
 
 ### What to Include
 
@@ -26,7 +28,6 @@ Please include the following information in your report:
 - Steps to reproduce the issue
 - Potential impact and severity
 - Suggested fix (if you have one)
-- Your contact information
 
 ### Response Timeline
 
@@ -154,7 +155,7 @@ Subscribe to security updates:
 
 ## Questions
 
-For security-related questions that are not vulnerabilities, please open a GitHub Discussion or contact moffa90@gmail.com.
+For security-related questions that are not vulnerabilities, please open a GitHub Discussion or submit an issue.
 
 ---
 
