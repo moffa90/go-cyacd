@@ -85,5 +85,5 @@ jobs:
       run: |
         for example in examples/*/; do
           echo "Building $(basename $example)..."
-          go build -v "$example"
+          go build -v "./$example"
         done
