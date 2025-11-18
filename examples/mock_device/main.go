@@ -12,17 +12,25 @@ import (
 	"github.com/moffa90/go-cyacd/protocol"
 )
 
+// flashRow stores row information in simulated flash
+type flashRow struct {
+	arrayID  byte
+	data     []byte
+	size     uint16
+	checksum byte
+}
+
 // RealisticMockDevice simulates a real Cypress bootloader device
 // It validates commands and generates proper responses
 type RealisticMockDevice struct {
-	siliconID    uint32
-	siliconRev   byte
-	flashStart   uint16
-	flashEnd     uint16
-	flash        map[uint16][]byte // Simulated flash memory
-	inBootloader bool
-	latency      time.Duration
-	responseQueue []byte           // Queue for responses to be read
+	siliconID     uint32
+	siliconRev    byte
+	flashStart    uint16
+	flashEnd      uint16
+	flash         map[uint16]*flashRow // Simulated flash memory
+	inBootloader  bool
+	latency       time.Duration
+	responseQueue []byte // Queue for responses to be read
 }
 
 func NewRealisticMockDevice() *RealisticMockDevice {
@@ -31,7 +39,7 @@ func NewRealisticMockDevice() *RealisticMockDevice {
 		siliconRev:   0x00,
 		flashStart:   0x0000,
 		flashEnd:     0x01FF,
-		flash:        make(map[uint16][]byte),
+		flash:        make(map[uint16]*flashRow),
 		inBootloader: false,
 		latency:      10 * time.Millisecond,
 	}
@@ -164,12 +172,19 @@ func (d *RealisticMockDevice) handleProgramRow(frame []byte) []byte {
 		return buildResponseFrame(protocol.ErrRow, nil)
 	}
 
-	// Store in simulated flash
-	d.flash[rowNum] = make([]byte, len(rowData))
-	copy(d.flash[rowNum], rowData)
+	// Calculate data checksum
+	dataChecksum := protocol.CalculateRowChecksum(rowData)
 
-	fmt.Printf("[DEVICE] Programmed row %d (array %d): %d bytes\n",
-		rowNum, arrayID, len(rowData))
+	// Store in simulated flash with metadata
+	d.flash[rowNum] = &flashRow{
+		arrayID:  arrayID,
+		data:     append([]byte{}, rowData...), // Copy data
+		size:     uint16(len(rowData)),
+		checksum: dataChecksum,
+	}
+
+	fmt.Printf("[DEVICE] Programmed row %d (array %d): %d bytes, checksum=0x%02X\n",
+		rowNum, arrayID, len(rowData), dataChecksum)
 	return buildResponseFrame(protocol.StatusSuccess, nil)
 }
 
@@ -179,18 +194,26 @@ func (d *RealisticMockDevice) handleVerifyRow(frame []byte) []byte {
 	}
 
 	dataStart := 4
+	arrayID := frame[dataStart]
 	rowNum := binary.LittleEndian.Uint16(frame[dataStart+1 : dataStart+3])
 
 	// Get row data from flash
-	rowData, exists := d.flash[rowNum]
+	row, exists := d.flash[rowNum]
 	if !exists {
 		return buildResponseFrame(protocol.ErrRow, nil)
 	}
 
-	// Calculate checksum
-	checksum := protocol.CalculateRowChecksum(rowData)
+	// Calculate checksum with metadata (as real device does)
+	// Formula: dataChecksum + arrayID + rowNum_H + rowNum_L + size_H + size_L
+	checksum := protocol.CalculateRowChecksumWithMetadata(
+		row.checksum,
+		arrayID,
+		rowNum,
+		row.size,
+	)
 
-	fmt.Printf("[DEVICE] Verified row %d: checksum=0x%02X\n", rowNum, checksum)
+	fmt.Printf("[DEVICE] Verified row %d: dataChecksum=0x%02X, withMetadata=0x%02X\n",
+		rowNum, row.checksum, checksum)
 	return buildResponseFrame(protocol.StatusSuccess, []byte{checksum})
 }
 
@@ -266,12 +289,14 @@ func main() {
 			{
 				ArrayID:  0x00,
 				RowNum:   0x0000,
+				Size:     0x0008,
 				Data:     []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
 				Checksum: protocol.CalculateRowChecksum([]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}),
 			},
 			{
 				ArrayID:  0x00,
 				RowNum:   0x0001,
+				Size:     0x0008,
 				Data:     []byte{0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18},
 				Checksum: protocol.CalculateRowChecksum([]byte{0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}),
 			},
@@ -309,8 +334,9 @@ func main() {
 	fmt.Printf("  In Bootloader: %t\n", device.inBootloader)
 	fmt.Printf("  Flash Rows:    %d\n", len(device.flash))
 
-	for rowNum, data := range device.flash {
-		fmt.Printf("    Row 0x%04X:  %d bytes: % 02X\n", rowNum, len(data), data)
+	for rowNum, row := range device.flash {
+		fmt.Printf("    Row 0x%04X:  %d bytes: % 02X (checksum=0x%02X)\n",
+			rowNum, len(row.data), row.data, row.checksum)
 	}
 
 	fmt.Println("\nThis mock device can be used for:")

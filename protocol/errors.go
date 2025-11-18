@@ -34,6 +34,8 @@ func getStatusName(code byte) string {
 		return "invalid data"
 	case ErrCommand:
 		return "unrecognized command"
+	case ErrKey:
+		return "CYRET_ERR_KEY"
 	case ErrChecksum:
 		return "checksum mismatch"
 	case ErrArray:

@@ -258,13 +258,71 @@ See the [examples](examples/) directory for complete working examples:
 ## Documentation
 
 - [GoDoc](https://pkg.go.dev/github.com/moffa90/go-cyacd)
-- [Protocol Specification](docs/protocol.md)
+- [Protocol Specification](docs/PROTOCOL.md)
 - [Examples](examples/)
+- [Contributing Guide](CONTRIBUTING.md)
 
 ## Requirements
 
 - Go 1.21 or later
 - No external dependencies
+
+## API Stability
+
+Starting with **v1.0.0**, this library follows strict semantic versioning and provides API stability guarantees:
+
+### Stable API (v1.x.x)
+
+All exported types, functions, constants, and methods in the public API are **stable** and will not change in backwards-incompatible ways within the v1 major version:
+
+- **Packages**: `bootloader`, `cyacd`, `protocol`
+- **Types**: All exported structs, interfaces, and type aliases
+- **Functions**: All exported functions and methods
+- **Constants**: All exported constants
+
+### Compatibility Promise
+
+- ✅ **Patch releases** (v1.0.x) - Bug fixes only, no API changes
+- ✅ **Minor releases** (v1.x.0) - New features, backwards-compatible
+- ❌ **Major releases** (v2.0.0) - Breaking changes allowed (with migration guide)
+
+### What This Means
+
+Your code written for v1.0.0 will continue to compile and work correctly with any v1.x.x release:
+
+```go
+// This code will work with v1.0.0 through v1.∞.∞
+import "github.com/moffa90/go-cyacd/bootloader"
+
+prog := bootloader.New(device)
+err := prog.Program(ctx, fw, key)
+```
+
+### Deprecation Policy
+
+If a feature needs to be removed:
+
+1. It will be marked as **deprecated** with a clear alternative
+2. It will remain functional for at least **one major version**
+3. Deprecation will be documented in godoc and CHANGELOG
+4. Migration guide will be provided before removal
+
+### Pre-v1.0.0 Disclaimer
+
+Versions before v1.0.0 (v0.x.x) are considered **development versions** and may include breaking changes in minor releases. Once v1.0.0 is released, the stability guarantees above apply.
+
+### Version Selection
+
+```bash
+# Latest stable version (recommended for production)
+go get github.com/moffa90/go-cyacd@latest
+
+# Specific version
+go get github.com/moffa90/go-cyacd@v1.2.3
+
+# Latest v1.x (safe, backwards-compatible updates)
+go get github.com/moffa90/go-cyacd@v1
+```
 
 ## License
 
