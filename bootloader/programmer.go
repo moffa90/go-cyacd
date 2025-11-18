@@ -538,9 +538,3 @@ func (p *Programmer) logInfo(msg string, keysAndValues ...interface{}) {
 	}
 }
 
-// logError logs an error message if a logger is configured.
-func (p *Programmer) logError(msg string, keysAndValues ...interface{}) {
-	if p.config.Logger != nil {
-		p.config.Logger.Error(msg, keysAndValues...)
-	}
-}

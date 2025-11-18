@@ -90,7 +90,7 @@ func ParseReader(r io.Reader) (*Firmware, error) {
 		// Check if this is Intel HEX format (starts with ':')
 		var row *Row
 		var err error
-		if len(line) > 0 && line[0] == ':' {
+		if line != "" && line[0] == ':' {
 			row, err = parseIntelHexRow(line)
 		} else {
 			row, err = parseRow(line)

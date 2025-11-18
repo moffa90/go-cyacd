@@ -15,7 +15,9 @@
       "Bash(git show-ref:*)",
       "Bash(git rev-parse:*)",
       "Bash(go list:*)",
-      "Bash(go mod download:*)"
+      "Bash(go mod download:*)",
+      "Bash(go test:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []

@@ -80,8 +80,7 @@ func buildResponseFrame(statusCode byte, data []byte) []byte {
 	dataLen := uint16(len(data))
 	frame := make([]byte, 0, protocol.MinFrameSize+len(data))
 
-	frame = append(frame, protocol.StartOfPacket)
-	frame = append(frame, statusCode)
+	frame = append(frame, protocol.StartOfPacket, statusCode)
 
 	lenBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(lenBytes, dataLen)
