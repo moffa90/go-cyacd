@@ -40,7 +40,6 @@ linters:
     - dogsled
     - dupl
     - errcheck
-    - exportloopref
     - funlen
     - gochecknoinits
     - goconst
@@ -79,12 +78,14 @@ issues:
         - lll
       source: "^//go:generate "
 
+  exclude-dirs:
+    - vendor
+
+  exclude-files:
+    - ".*\\.pb\\.go$"
+
   max-issues-per-linter: 0
   max-same-issues: 0
 
 run:
   timeout: 5m
-  skip-dirs:
-    - vendor
-  skip-files:
-    - ".*\\.pb\\.go$"

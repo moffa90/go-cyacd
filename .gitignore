@@ -31,3 +31,18 @@ build/
 # Temporary files
 tmp/
 temp/
+
+# Test utility files (prevent accidental commits)
+test_parse.go
+test_firmware_parse.go
+test_parse*.go
+
+# Example binaries
+/advanced
+/basic
+/mock_device
+/with_progress
+examples/*/advanced
+examples/*/basic
+examples/*/mock_device
+examples/*/with_progress
