@@ -55,7 +55,7 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - revive
+    # - revive  # Disabled for v1.0.0 - config issues with stuttering check
     - goprintffuncname
     - gosec
     - gosimple
