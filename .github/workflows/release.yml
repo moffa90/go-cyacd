@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for changelog generation
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Run tests
+      run: go test -v -race ./...
+
+    - name: Build examples
+      run: |
+        for example in examples/*/; do
+          echo "Building $(basename $example)..."
+          go build -v "./$example"
+        done
+
+    - name: Get tag name
+      id: tag
+      run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get the previous tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+        if [ -z "$PREVIOUS_TAG" ]; then
+          # First release - get all commits
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+        else
+          # Get commits since previous tag
+          CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+        fi
+
+        # Save changelog to file for use in release notes
+        echo "$CHANGELOG" > CHANGELOG.txt
+
+        # Also output for GitHub Actions
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.TAG }}
+        release_name: Release ${{ steps.tag.outputs.TAG }}
+        body: |
+          ## Changes
+
+          ${{ steps.changelog.outputs.CHANGELOG }}
+
+          ---
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.tag.outputs.TAG }}...HEAD
+
+          ## Installation
+
+          ```bash
+          go get github.com/moffa90/go-cyacd@${{ steps.tag.outputs.TAG }}
+          ```
+
+          ## Documentation
+
+          - [README](https://github.com/moffa90/go-cyacd/blob/${{ steps.tag.outputs.TAG }}/README.md)
+          - [Protocol Documentation](https://github.com/moffa90/go-cyacd/blob/${{ steps.tag.outputs.TAG }}/docs/PROTOCOL.md)
+          - [Contributing Guide](https://github.com/moffa90/go-cyacd/blob/${{ steps.tag.outputs.TAG }}/CONTRIBUTING.md)
+          - [GoDoc](https://pkg.go.dev/github.com/moffa90/go-cyacd@${{ steps.tag.outputs.TAG }})
+        draft: false
+        prerelease: false
