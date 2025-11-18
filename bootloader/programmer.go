@@ -214,12 +214,12 @@ func (p *Programmer) programRow(ctx context.Context, row *cyacd.Row) error {
 	chunkSize := p.config.ChunkSize
 	data := row.Data
 	offset := 0
-	dataLen := len(data)
 
 	// Send chunks using SendData while (remaining + SendData overhead) exceeds packet size
-	// This replicates the reference implementation's algorithm:
-	// for (r.Size()-offset+7) > PacketSize
-	for (dataLen-offset+protocol.SendDataOverhead) > protocol.MaxPacketSize {
+	// Uses row.Size (from CYACD file) instead of len(data) to match reference implementation
+	// This is critical for hybrid CYACD files where Size field may differ from actual data length
+	// Reference: for (r.Size()-offset+7) > PacketSize
+	for (int(row.Size)-offset+protocol.SendDataOverhead) > protocol.MaxPacketSize {
 		chunk := data[offset : offset+chunkSize]
 		if err := p.sendData(ctx, chunk); err != nil {
 			return fmt.Errorf("send data chunk: %w", err)

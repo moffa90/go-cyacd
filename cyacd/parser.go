@@ -203,6 +203,7 @@ func parseRow(line string) (*Row, error) {
 	row := &Row{
 		ArrayID:  arrayID,
 		RowNum:   rowNum,
+		Size:     dataLen,
 		Data:     make([]byte, len(rowData)),
 		Checksum: checksum,
 	}
@@ -212,17 +213,19 @@ func parseRow(line string) (*Row, error) {
 }
 
 // parseIntelHexRow parses a row in PSoC hybrid format (starting with ':').
-// This is a PSoC-specific hybrid format where rows have an Intel HEX EOF header
-// followed by raw firmware data.
+// Despite the ':' prefix, this format is actually CYACD format with a colon prefix,
+// NOT true Intel HEX format. This matches the reference bootloader-usb implementation.
 //
-// Format: :[Intel HEX EOF Header (10 chars)][Raw Data]
+// Format after removing ':': [ArrayID(1)][RowNum(2)][Size(2)][Data(N)][Checksum(1)]
+// All multi-byte fields use BIG-ENDIAN byte order (unlike standard CYACD which uses little-endian)
 //
-// Example: :0000450100[raw firmware bytes...]
-//   - :0000450100 is an Intel HEX EOF record (LL=00, AAAA=0045, TT=01, CC=00)
-//   - Everything after is raw firmware data (not CYACD format)
-//
-// We extract the address from the Intel HEX header and use it as the row number,
-// then treat the remaining data as the row's firmware bytes.
+// Example: :000045010000800020...
+//   After removing ':': 000045010000800020...
+//   - ArrayID: 00
+//   - RowNum: 0045 (big-endian) = 69
+//   - Size: 0100 (big-endian) = 256
+//   - Data: 00800020... (256 bytes)
+//   - Checksum: last byte
 func parseIntelHexRow(line string) (*Row, error) {
 	// Remove the leading ':'
 	if len(line) < 1 || line[0] != ':' {
@@ -231,39 +234,50 @@ func parseIntelHexRow(line string) (*Row, error) {
 
 	line = line[1:] // Strip ':'
 
-	// Minimum: Intel HEX header + some data
+	// Minimum row length check
 	if len(line) < MinimumRowLength {
 		return nil, fmt.Errorf("hybrid row too short: got %d characters, minimum is %d", len(line), MinimumRowLength)
 	}
 
-	// Decode the Intel HEX header (first IntelHexHeaderLength hex chars = 5 bytes)
-	// Format: LLAAAATTCC where LL=length, AAAA=address, TT=type, CC=checksum
-	headerHex := line[:IntelHexHeaderLength]
-	headerData, err := hex.DecodeString(headerHex)
-	if err != nil {
-		return nil, fmt.Errorf("invalid Intel HEX header: %w", err)
-	}
-
-	// Extract address from header (bytes 1-2, big-endian in Intel HEX)
-	address := uint16(headerData[1])<<8 | uint16(headerData[2])
-
-	// The remaining data after the Intel HEX header is the raw firmware
-	dataHex := line[IntelHexHeaderLength:]
-	data, err := hex.DecodeString(dataHex)
+	// Hex decode the entire line (CYACD format)
+	data, err := hex.DecodeString(line)
 	if err != nil {
 		return nil, fmt.Errorf("invalid hex data: %w", err)
 	}
 
-	// Calculate checksum for the firmware data
-	checksum := calculateRowChecksum(data)
+	if len(data) < MinimumRowDataBytes {
+		return nil, fmt.Errorf("row data too short: got %d bytes, minimum is %d", len(data), MinimumRowDataBytes)
+	}
 
-	// Create row with address as row number, array ID = 0
+	// Parse CYACD format with BIG-ENDIAN byte order (reference implementation behavior)
+	arrayID := data[0]
+	rowNum := uint16(data[1])<<8 | uint16(data[2])    // BIG-ENDIAN
+	dataLen := uint16(data[3])<<8 | uint16(data[4])   // BIG-ENDIAN
+
+	expectedLen := int(RowHeaderSize + RowChecksumSize + dataLen)
+	if len(data) != expectedLen {
+		return nil, fmt.Errorf("data length mismatch: got %d bytes, expected %d (header=%d + data=%d + checksum=%d)",
+			len(data), expectedLen, RowHeaderSize, dataLen, RowChecksumSize)
+	}
+
+	rowData := data[RowHeaderSize : RowHeaderSize+dataLen]
+	checksum := data[len(data)-1]
+
+	// Verify checksum
+	calculatedChecksum := calculateRowChecksum(data[:len(data)-1])
+	if checksum != calculatedChecksum {
+		return nil, fmt.Errorf("checksum mismatch: got 0x%02X, expected 0x%02X",
+			checksum, calculatedChecksum)
+	}
+
 	row := &Row{
-		ArrayID:  0x00,
-		RowNum:   address,
-		Data:     data,
+		ArrayID:  arrayID,
+		RowNum:   rowNum,
+		Size:     dataLen,
+		Data:     make([]byte, len(rowData)),
 		Checksum: checksum,
 	}
+	copy(row.Data, rowData)
 
 	return row, nil
 }

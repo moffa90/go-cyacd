@@ -25,6 +25,10 @@ type Row struct {
 	// RowNum is the flash row number
 	RowNum uint16
 
+	// Size is the data size field from the .cyacd file
+	// This may differ from len(Data) and is used for chunking calculations
+	Size uint16
+
 	// Data is the flash row data to be programmed
 	Data []byte
 

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git log:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch",
+      "WebFetch(domain:dtsheet.com)",
+      "Bash(find:*)",
+      "Bash(git tag:*)",
+      "Bash(python3:*)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl:*)",
+      "Bash(git describe:*)",
+      "Bash(git show-ref:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(go list:*)",
+      "Bash(go mod download:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

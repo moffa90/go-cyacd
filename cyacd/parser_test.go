@@ -33,6 +33,7 @@ func TestParseReader(t *testing.T) {
 					{
 						ArrayID:  0x00,
 						RowNum:   0x0000,
+						Size:     0x0004,
 						Data:     []byte{0x01, 0x02, 0x03, 0x04},
 						Checksum: 0xF2,
 					},
@@ -53,12 +54,14 @@ func TestParseReader(t *testing.T) {
 					{
 						ArrayID:  0x00,
 						RowNum:   0x0000,
+						Size:     0x0004,
 						Data:     []byte{0x01, 0x02, 0x03, 0x04},
 						Checksum: 0xF2,
 					},
 					{
 						ArrayID:  0x00,
 						RowNum:   0x0001,
+						Size:     0x0004,
 						Data:     []byte{0x05, 0x06, 0x07, 0x08},
 						Checksum: 0xE1,
 					},
@@ -80,6 +83,7 @@ func TestParseReader(t *testing.T) {
 					{
 						ArrayID:  0x00,
 						RowNum:   0x0000,
+						Size:     0x0004,
 						Data:     []byte{0x01, 0x02, 0x03, 0x04},
 						Checksum: 0xF2,
 					},
@@ -294,6 +298,7 @@ func TestParseRow(t *testing.T) {
 			want: &Row{
 				ArrayID:  0x00,
 				RowNum:   0x0000,
+				Size:     0x0004,
 				Data:     []byte{0x01, 0x02, 0x03, 0x04},
 				Checksum: 0xF2,
 			},
@@ -305,6 +310,7 @@ func TestParseRow(t *testing.T) {
 			want: &Row{
 				ArrayID:  0x01,
 				RowNum:   0x01FF,
+				Size:     0x0004,
 				Data:     []byte{0xAA, 0xBB, 0xCC, 0xDD},
 				Checksum: 0xED,
 			},

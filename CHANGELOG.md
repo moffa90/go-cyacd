@@ -5,6 +5,81 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4] - 2025-01-18
+
+### CRITICAL FIX
+
+**Fixed hybrid CYACD parsing and chunking to match reference implementation**: Rows with `:` prefix are now correctly parsed as CYACD format (not Intel HEX), using BIG-ENDIAN byte order and the Size field for chunking calculations. This eliminates ERR_LENGTH (0x03) errors.
+
+### Changed
+
+- **cyacd/firmware.go**: Added `Size uint16` field to `Row` struct
+  - Preserves the original size field from CYACD file
+  - May differ from `len(Data)` in hybrid format files
+  - Used for chunking calculations to match bootloader expectations
+
+- **cyacd/parser.go**: Fixed `parseIntelHexRow()` to parse as CYACD format with BIG-ENDIAN
+  - Despite `:` prefix, these are CYACD format rows, not true Intel HEX
+  - Changed from little-endian to BIG-ENDIAN for RowNum and Size fields
+  - Now matches reference implementation at https://github.com/Cellgain/bootloader-usb
+  - Updated `parseRow()` to store Size field
+
+- **bootloader/programmer.go**: Updated chunking algorithm to use `row.Size` instead of `len(row.Data)`
+  - Critical for hybrid CYACD files where Size field differs from actual data length
+  - Matches reference implementation: `for (r.Size()-offset+7) > PacketSize`
+
+### Fixed
+
+- **ERR_LENGTH (0x03) errors on hybrid CYACD files**: Fixed parsing and chunking mismatch
+- **Byte order mismatch**: Hybrid rows now use BIG-ENDIAN (reference behavior) instead of little-endian
+- **Off-by-one chunking errors**: Using Size field eliminates 1-byte discrepancies
+
+### Technical Details
+
+**Root Cause**: The library incorrectly parsed `:` prefixed rows as Intel HEX format, when they're actually CYACD format with a `:` prefix. This caused two critical issues:
+
+1. **Byte order mismatch**: Intel HEX interpretation vs CYACD BIG-ENDIAN format
+2. **Size field loss**: Using `len(Data)` instead of the Size field from the file
+
+**Example for row with Size=256:**
+
+**Before v0.5.4 (INCORRECT)**:
+```
+Parsing:  Size interpreted as 257 bytes (wrong endianness)
+Chunking: 4×57 + 29 = 257 bytes
+Result:   Bootloader expects 256, receives 257 → ERR_LENGTH (0x03)
+```
+
+**After v0.5.4 (CORRECT)**:
+```
+Parsing:  Size=256 (BIG-ENDIAN 0x0100)
+Chunking: 4×57 + 28 = 256 bytes
+Result:   Bootloader expects 256, receives 256 → SUCCESS
+```
+
+**Hybrid CYACD Format**:
+```
+:000045010000800020...
+After removing ':': 000045010000800020...
+- ArrayID: 00
+- RowNum: 00 45 (BIG-ENDIAN) = 69
+- Size: 01 00 (BIG-ENDIAN) = 256
+- Data: 00 80 00 20... (256 bytes)
+- Checksum: last byte
+```
+
+### Migration Guide
+
+**No action required.** This is a bug fix for hybrid CYACD files (lines starting with `:`). Standard CYACD files continue to work as before.
+
+If your firmware uses hybrid format and was experiencing ERR_LENGTH errors, this version should resolve them completely.
+
+### Credits
+
+This fix was identified through comprehensive comparison with the reference C implementation at https://github.com/Cellgain/bootloader-usb, ensuring byte-for-byte compatibility with the proven working implementation.
+
+---
+
 ## [0.5.3] - 2025-01-18
 
 ### CRITICAL FIX
@@ -326,6 +401,7 @@ This clearly includes the SOP byte. Our previous implementation violated the spe
 - Comprehensive test coverage
 - Examples for basic, advanced, and progress tracking use cases
 
+[0.5.4]: https://github.com/moffa90/go-cyacd/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/moffa90/go-cyacd/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/moffa90/go-cyacd/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/moffa90/go-cyacd/compare/v0.5.0...v0.5.1
