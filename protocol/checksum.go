@@ -56,7 +56,7 @@ func CalculateRowChecksum(data []byte) byte {
 //
 // This matches the Cypress bootloader protocol specification and is verified
 // against the working bootloader-usb implementation.
-func CalculateRowChecksumWithMetadata(dataChecksum byte, arrayID byte, rowNum uint16, dataSize uint16) byte {
+func CalculateRowChecksumWithMetadata(dataChecksum, arrayID byte, rowNum, dataSize uint16) byte {
 	sum := dataChecksum
 	sum += arrayID
 	sum += byte(rowNum >> 8)   // RowNum high byte
@@ -82,7 +82,7 @@ func calculateCRC16(data []byte) uint16 {
 			if crc&CRC16HighBitMask != 0 {
 				crc = (crc << 1) ^ CRC16Polynomial
 			} else {
-				crc = crc << 1
+				crc <<= 1
 			}
 		}
 	}
