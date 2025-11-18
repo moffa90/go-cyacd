@@ -14,33 +14,7 @@ linters-settings:
     min-occurrences: 3
   misspell:
     locale: US
-  lll:
-    line-length: 150  # Slightly increased for readability
-  # goimports settings removed - it's a formatter in v2+, not a linter
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - appendCombine  # Minor optimization - will address post-v1.0.0
-  funlen:
-    lines: 200  # Increased for long test functions - will refactor post-v1.0.0
-    statements: 100  # Increased to accommodate test functions
-  revive:
-    rules:
-      - name: var-naming
-        severity: warning
-        disabled: false
-      - name: exported
-        severity: warning
-        disabled: false
-        arguments:
-          - "checkPrivateReceivers"
-          - "sayRepetitiveInsteadOfStutters"
-          - "disableStutteringCheck"
+  # Settings for disabled linters (funlen, lll, gocritic, gosec, revive) removed
 
 linters:
   disable-all: true
