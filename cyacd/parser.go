@@ -47,7 +47,7 @@ func Parse(path string) (*Firmware, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	return ParseReader(f)
 }
