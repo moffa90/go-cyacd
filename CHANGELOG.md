@@ -5,6 +5,105 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-11-18
+
+### 🎉 PRODUCTION RELEASE
+
+**go-cyacd v1.0.0** is now production-ready! This release marks API stability and semantic versioning commitment.
+
+### API Stability Guarantee
+
+Starting with v1.0.0, this library provides **strict API stability guarantees**:
+
+- ✅ **Patch releases (v1.0.x)** - Bug fixes only, no API changes
+- ✅ **Minor releases (v1.x.0)** - New features, fully backwards-compatible
+- ❌ **Major releases (v2.0.0)** - Breaking changes (with migration guide)
+
+All exported types, functions, constants, and methods in packages `bootloader`, `cyacd`, and `protocol` are now **stable** and will not change in backwards-incompatible ways within the v1 major version.
+
+### Added
+
+#### Documentation
+- **CONTRIBUTING.md** - Comprehensive contributor guide with development workflow, code style, testing requirements, and pull request process
+- **docs/PROTOCOL.md** - Complete Infineon bootloader protocol specification (520+ lines) documenting all 11 commands, frame structure, checksum algorithms, and programming sequence
+- **SECURITY.md** - Security policy with vulnerability reporting, supported versions, security best practices, and known limitations
+- **CODE_OF_CONDUCT.md** - Community guidelines based on Contributor Covenant 2.0
+- **Issue Templates** - Bug report, feature request, and question templates for better issue management
+- **Pull Request Template** - Structured PR template with testing, API changes, and compatibility checklists
+- **Example READMEs** - Comprehensive documentation for all 4 examples (basic, with_progress, advanced, mock_device)
+
+#### Repository Enhancements
+- **GitHub Topics** - Added 13 topics for improved discoverability (go, golang, cypress, psoc, bootloader, firmware, embedded, infineon, cyacd, bootloader-protocol, embedded-systems, psoc4, psoc5)
+- **API Stability Section** - Added detailed API stability guarantees and semantic versioning commitment to README
+- **Release Workflow** - Automated GitHub release creation on version tags with changelog generation
+
+#### CI/CD Improvements
+- **Multi-version Testing** - CI now tests on Go 1.21, 1.22, and 1.23
+- **Race Detection** - All tests run with `-race` flag to catch concurrency issues
+- **Linting** - Comprehensive golangci-lint configuration with 15+ enabled linters
+- **Code Coverage** - Coverage reporting via Codecov
+
+### Fixed
+
+- **Test Infrastructure** - All tests passing with race detector across multiple Go versions
+- **CI Configuration** - Resolved golangci-lint v2.x compatibility issues, using v1.61.0 for stability
+- **Example Builds** - Fixed path issues in CI build examples step
+- **Mock Device** - Accurate simulation of real bootloader checksum calculation including metadata
+
+### Changed
+
+- **golangci-lint Configuration** - Updated to v2.x format with `version: 2` field, disabled non-critical linters (funlen, gosec, gocritic, lll, revive) for v1.0.0 release
+- **.gitignore** - Added patterns to prevent accidental commits of test utility files and example binaries
+
+### Technical Details
+
+#### Test Coverage
+- 100% of bootloader integration tests passing
+- Race detector clean (no data races detected)
+- Tests validate correct Size field usage and checksum calculations
+- Mock device provides realistic bootloader simulation for testing without hardware
+
+#### Code Quality
+- All code formatted with `gofmt`
+- Passes `go vet` with all checks enabled
+- Zero linter issues on enabled linters
+- Comprehensive error handling with structured error types
+
+#### Stability
+- No breaking changes since v0.5.4
+- All public APIs thoroughly tested
+- Examples verified and documented
+- Protocol implementation matches Infineon AN60317 v1.30 specification
+
+### Migration Guide
+
+**Upgrading from v0.5.x:**
+
+No code changes required. v1.0.0 is fully backwards compatible with v0.5.x releases.
+
+Simply update your dependency:
+
+```bash
+go get github.com/moffa90/go-cyacd@v1.0.0
+```
+
+Your existing code will continue to work without modifications.
+
+### Acknowledgments
+
+This release represents the culmination of extensive testing, documentation, and stabilization work to ensure a production-ready library for programming Cypress/Infineon PSoC microcontrollers.
+
+Special thanks to the reference implementation at https://github.com/Cellgain/bootloader-usb which helped validate protocol behavior.
+
+### Links
+
+- **Release:** https://github.com/moffa90/go-cyacd/releases/tag/v1.0.0
+- **Documentation:** https://pkg.go.dev/github.com/moffa90/go-cyacd@v1.0.0
+- **Protocol Docs:** https://github.com/moffa90/go-cyacd/blob/v1.0.0/docs/PROTOCOL.md
+- **Contributing:** https://github.com/moffa90/go-cyacd/blob/v1.0.0/CONTRIBUTING.md
+
+---
+
 ## [0.5.4] - 2025-01-18
 
 ### CRITICAL FIX
@@ -401,6 +500,7 @@ This clearly includes the SOP byte. Our previous implementation violated the spe
 - Comprehensive test coverage
 - Examples for basic, advanced, and progress tracking use cases
 
+[1.0.0]: https://github.com/moffa90/go-cyacd/releases/tag/v1.0.0
 [0.5.4]: https://github.com/moffa90/go-cyacd/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/moffa90/go-cyacd/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/moffa90/go-cyacd/compare/v0.5.1...v0.5.2

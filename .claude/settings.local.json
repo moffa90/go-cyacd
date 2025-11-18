@@ -17,7 +17,8 @@
       "Bash(go list:*)",
       "Bash(go mod download:*)",
       "Bash(go test:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(gh repo view:*)"
     ],
     "deny": [],
     "ask": []
