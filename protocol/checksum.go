@@ -60,9 +60,9 @@ func CalculateRowChecksumWithMetadata(dataChecksum byte, arrayID byte, rowNum ui
 	sum := dataChecksum
 	sum += arrayID
 	sum += byte(rowNum >> 8)   // RowNum high byte
-	sum += byte(rowNum)         // RowNum low byte
-	sum += byte(dataSize >> 8)  // Size high byte
-	sum += byte(dataSize)       // Size low byte
+	sum += byte(rowNum)        // RowNum low byte
+	sum += byte(dataSize >> 8) // Size high byte
+	sum += byte(dataSize)      // Size low byte
 	return sum
 }
 

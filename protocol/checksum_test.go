@@ -64,7 +64,7 @@ func TestCalculatePacketChecksum(t *testing.T) {
 		{
 			name:     "command with length (includes SOP)",
 			data:     []byte{0x01, 0x38, 0x06, 0x00}, // SOP + Enter Bootloader + len=6
-			expected: 0xFFC1,                          // 2's complement: sum=0x3F, ~0x3F=0xFFC0, +1=0xFFC1
+			expected: 0xFFC1,                         // 2's complement: sum=0x3F, ~0x3F=0xFFC0, +1=0xFFC1
 		},
 	}
 

@@ -53,7 +53,7 @@ func New(device io.ReadWriter, opts ...Option) *Programmer {
 //  5. Verify application checksum
 //  6. Exit bootloader
 //
-// The operation can be cancelled via context.
+// The operation can be canceled via context.
 //
 // Example:
 //
@@ -134,7 +134,7 @@ func (p *Programmer) Program(ctx context.Context, fw *cyacd.Firmware, key []byte
 	bytesWritten := 0
 	for i, row := range fw.Rows {
 		if err := ctx.Err(); err != nil {
-			return fmt.Errorf("cancelled: %w", err)
+			return fmt.Errorf("canceled: %w", err)
 		}
 
 		if err := p.programRow(ctx, row); err != nil {
@@ -219,7 +219,7 @@ func (p *Programmer) programRow(ctx context.Context, row *cyacd.Row) error {
 	// Uses row.Size (from CYACD file) instead of len(data) to match reference implementation
 	// This is critical for hybrid CYACD files where Size field may differ from actual data length
 	// Reference: for (r.Size()-offset+7) > PacketSize
-	for (int(row.Size)-offset+protocol.SendDataOverhead) > protocol.MaxPacketSize {
+	for (int(row.Size) - offset + protocol.SendDataOverhead) > protocol.MaxPacketSize {
 		chunk := data[offset : offset+chunkSize]
 		if err := p.sendData(ctx, chunk); err != nil {
 			return fmt.Errorf("send data chunk: %w", err)
@@ -537,4 +537,3 @@ func (p *Programmer) logInfo(msg string, keysAndValues ...interface{}) {
 		p.config.Logger.Info(msg, keysAndValues...)
 	}
 }
-

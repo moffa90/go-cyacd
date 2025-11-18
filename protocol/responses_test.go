@@ -123,18 +123,18 @@ func TestParseResponse(t *testing.T) {
 
 func TestParseEnterBootloaderResponse(t *testing.T) {
 	tests := []struct {
-		name      string
-		data      []byte
-		wantInfo  *DeviceInfo
-		wantErr   bool
-		errMsg    string
+		name     string
+		data     []byte
+		wantInfo *DeviceInfo
+		wantErr  bool
+		errMsg   string
 	}{
 		{
 			name: "valid response",
 			data: []byte{
 				0xAA, 0x02, 0x96, 0x1E, // Silicon ID (little-endian)
-				0x00,                   // Silicon Rev
-				0x01, 0x1E, 0x00,       // Bootloader Ver
+				0x00,             // Silicon Rev
+				0x01, 0x1E, 0x00, // Bootloader Ver
 			},
 			wantInfo: &DeviceInfo{
 				SiliconID:     0x1E9602AA,

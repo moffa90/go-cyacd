@@ -15,18 +15,18 @@ import (
 
 // MockDevice simulates a bootloader device for testing
 type MockDevice struct {
-	readBuf  *bytes.Buffer
-	writeBuf *bytes.Buffer
-	readErr  error
-	writeErr error
+	readBuf   *bytes.Buffer
+	writeBuf  *bytes.Buffer
+	readErr   error
+	writeErr  error
 	responses [][]byte
-	respIdx  int
+	respIdx   int
 }
 
 func NewMockDevice() *MockDevice {
 	return &MockDevice{
-		readBuf:  new(bytes.Buffer),
-		writeBuf: new(bytes.Buffer),
+		readBuf:   new(bytes.Buffer),
+		writeBuf:  new(bytes.Buffer),
 		responses: make([][]byte, 0),
 	}
 }

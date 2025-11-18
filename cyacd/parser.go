@@ -181,8 +181,8 @@ func parseRow(line string) (*Row, error) {
 	}
 
 	arrayID := data[0]
-	rowNum := uint16(data[1]) | uint16(data[2])<<8    // Little-endian
-	dataLen := uint16(data[3]) | uint16(data[4])<<8   // Little-endian
+	rowNum := uint16(data[1]) | uint16(data[2])<<8  // Little-endian
+	dataLen := uint16(data[3]) | uint16(data[4])<<8 // Little-endian
 
 	expectedLen := int(RowHeaderSize + RowChecksumSize + dataLen)
 	if len(data) != expectedLen {
@@ -220,12 +220,13 @@ func parseRow(line string) (*Row, error) {
 // All multi-byte fields use BIG-ENDIAN byte order (unlike standard CYACD which uses little-endian)
 //
 // Example: :000045010000800020...
-//   After removing ':': 000045010000800020...
-//   - ArrayID: 00
-//   - RowNum: 0045 (big-endian) = 69
-//   - Size: 0100 (big-endian) = 256
-//   - Data: 00800020... (256 bytes)
-//   - Checksum: last byte
+//
+//	After removing ':': 000045010000800020...
+//	- ArrayID: 00
+//	- RowNum: 0045 (big-endian) = 69
+//	- Size: 0100 (big-endian) = 256
+//	- Data: 00800020... (256 bytes)
+//	- Checksum: last byte
 func parseIntelHexRow(line string) (*Row, error) {
 	// Remove the leading ':'
 	if len(line) < 1 || line[0] != ':' {
@@ -251,8 +252,8 @@ func parseIntelHexRow(line string) (*Row, error) {
 
 	// Parse CYACD format with BIG-ENDIAN byte order (reference implementation behavior)
 	arrayID := data[0]
-	rowNum := uint16(data[1])<<8 | uint16(data[2])    // BIG-ENDIAN
-	dataLen := uint16(data[3])<<8 | uint16(data[4])   // BIG-ENDIAN
+	rowNum := uint16(data[1])<<8 | uint16(data[2])  // BIG-ENDIAN
+	dataLen := uint16(data[3])<<8 | uint16(data[4]) // BIG-ENDIAN
 
 	expectedLen := int(RowHeaderSize + RowChecksumSize + dataLen)
 	if len(data) != expectedLen {
