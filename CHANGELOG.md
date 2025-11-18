@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2025-01-18
+
+### CRITICAL FIX
+
+**Fixed SendData response handling to prevent protocol desynchronization**: The `sendData()` function now correctly reads and validates responses after each SendData command, ensuring the bootloader protocol state machine stays synchronized.
+
+### Changed
+
+- **bootloader/programmer.go**: Updated `sendData()` function to use `sendCommandWithResponse()` instead of fire-and-forget `sendCommand()`
+  - Now reads response after each SendData command
+  - Validates response status code
+  - Returns error if SendData fails
+  - Prevents buffer desynchronization that caused ERR_LENGTH errors
+
+### Fixed
+
+- **ERR_LENGTH (0x03) errors during row programming**: Fixed critical bug where SendData responses were not being read, causing the bootloader to become desynchronized
+- **Protocol state machine synchronization**: Each SendData command now waits for acknowledgment before proceeding
+- **Response buffer corruption**: Eliminated stale responses in the read buffer that were causing incorrect error codes
+
+### Technical Details
+
+The previous implementation sent SendData commands without reading responses (fire-and-forget). This violated the Infineon bootloader protocol which expects each command to be acknowledged before the next is sent.
+
+**Previous Behavior (INCORRECT)**:
+```
+Client: SendData(57 bytes) →
+Client: SendData(57 bytes) →
+Client: SendData(57 bytes) →
+Client: SendData(57 bytes) →
+Client: ProgramRow(29 bytes) →
+Client: ← Read response (reads WRONG response from buffer)
+Result: ERR_LENGTH (0x03) due to desynchronization
+```
+
+**New Behavior (CORRECT)**:
+```
+Client: SendData(57 bytes) → ← Read & validate response ✓
+Client: SendData(57 bytes) → ← Read & validate response ✓
+Client: SendData(57 bytes) → ← Read & validate response ✓
+Client: SendData(57 bytes) → ← Read & validate response ✓
+Client: ProgramRow(29 bytes) → ← Read & validate response ✓
+Result: SUCCESS - Protocol stays synchronized
+```
+
+### Migration Guide
+
+**No action required.** This is a bug fix that improves reliability. All existing code will work correctly with this version.
+
+If you were experiencing ERR_LENGTH (0x03) errors during programming, especially on rows 4-5, this version should resolve the issue.
+
+### Root Cause Analysis
+
+The bug was introduced because the reference C implementation's protocol behavior wasn't fully replicated. While the chunking algorithm was correct, the response handling was incomplete. The bootloader firmware expects:
+
+1. Client sends SendData command
+2. **Bootloader sends response**
+3. **Client reads and validates response**
+4. Client sends next command (SendData or ProgramRow)
+
+Skipping step 3 caused the bootloader's internal state machine to become confused, leading to length validation errors on subsequent commands.
+
+---
+
 ## [0.5.2] - 2025-01-17
 
 ### CRITICAL FIX
@@ -262,6 +326,7 @@ This clearly includes the SOP byte. Our previous implementation violated the spe
 - Comprehensive test coverage
 - Examples for basic, advanced, and progress tracking use cases
 
+[0.5.3]: https://github.com/moffa90/go-cyacd/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/moffa90/go-cyacd/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/moffa90/go-cyacd/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/moffa90/go-cyacd/compare/v0.4.1...v0.5.0

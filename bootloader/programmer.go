@@ -302,13 +302,32 @@ func (p *Programmer) verifyRow(ctx context.Context, row *cyacd.Row) error {
 }
 
 // sendData sends a data chunk using the Send Data command.
+// It waits for and validates the response to ensure the bootloader is synchronized.
 func (p *Programmer) sendData(ctx context.Context, data []byte) error {
 	cmd, err := protocol.BuildSendDataCmd(data)
 	if err != nil {
 		return err
 	}
 
-	return p.sendCommand(ctx, cmd)
+	response, err := p.sendCommandWithResponse(ctx, cmd)
+	if err != nil {
+		return err
+	}
+
+	// Parse and check response
+	statusCode, _, err := protocol.ParseResponse(response)
+	if err != nil {
+		return err
+	}
+
+	if statusCode != protocol.StatusSuccess {
+		return &protocol.ProtocolError{
+			Operation:  "send data",
+			StatusCode: statusCode,
+		}
+	}
+
+	return nil
 }
 
 // EnterBootloader sends the Enter Bootloader command with the specified key.
