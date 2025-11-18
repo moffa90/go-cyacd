@@ -13,7 +13,7 @@ Professional Go library for programming Cypress/Infineon microcontrollers with .
 - 🎯 **Pure Go** - No CGo dependencies
 - 📦 **Zero external dependencies** - Only Go standard library
 - 🔌 **Hardware independent** - Clean `io.ReadWriter` interface
-- ⚡ **Full protocol support** - Complete Infineon bootloader protocol v1.30
+- ⚡ **Full protocol support** - Complete Infineon bootloader protocol v1.60
 - 🔄 **Progress tracking** - Real-time programming progress callbacks
 - 📝 **Comprehensive logging** - Pluggable logging interface
 - ⏱️ **Context support** - Cancellation and timeout support
