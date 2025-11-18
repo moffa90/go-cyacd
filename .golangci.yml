@@ -37,7 +37,9 @@ linters-settings:
         severity: warning
         disabled: false
         arguments:
-          - ["checkPrivateReceivers", "sayRepetitiveInsteadOfStutters", "disableStutteringCheck"]
+          - "checkPrivateReceivers"
+          - "sayRepetitiveInsteadOfStutters"
+          - "disableStutteringCheck"
 
 linters:
   disable-all: true
